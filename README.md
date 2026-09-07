@@ -1,6 +1,8 @@
-# Welcome to your Expo app 👋
+# Rentivo — mobile app
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Expo (React Native) client for Rentivo. It shares the Rentivo API with the
+web app in `../rentflow-frontend`, and styling is Tailwind-in-React-Native via
+Nativewind.
 
 ## Get started
 
@@ -10,47 +12,55 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Start the API (in `../rentflow-backend`)
+
+   ```bash
+   npm run start:dev
+   ```
+
+3. Start the app
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+Open it in an [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/),
+an [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/), a
+[development build](https://docs.expo.dev/develop/development-builds/introduction/),
+or [Expo Go](https://expo.dev/go).
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Pointing the app at the API
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+`src/lib/api.ts` resolves the base URL in this order:
 
-## Get a fresh project
+1. `EXPO_PUBLIC_API_URL`, if set — needed for staging/production builds.
+2. The host Metro is served from, so a phone on the same Wi-Fi reaches the dev
+   machine at its LAN IP rather than at its own `localhost`.
+3. `10.0.2.2` on the Android emulator, `localhost` everywhere else.
 
-When you're ready, run:
+See `.env.example`. Nothing needs setting for ordinary local development.
+
+## Layout
+
+- `src/app/(tabs)/` — the four tabs: Home, Rent, Settings, Profile.
+- `src/app/find.tsx` — the "Find a rent" location picker, opened by the raised
+  centre button in the tab bar.
+- `src/components/` — shared UI (cards, loading/empty/error states).
+- `src/lib/` — API client, auth context, shared rentals store, formatting.
+- `global.css` — the Tailwind v4 theme. Nativewind v5 is configured in CSS, so
+  there is no `tailwind.config.js`.
+
+All four tabs read one shared fetch of `/rentals`, `/rentals/products` and
+`/rentals/packages` (`RentalsProvider`), so switching tabs costs no extra
+requests. Profile signs in against `POST /auth/login` and keeps the JWT in
+`expo-secure-store`, sending it as `Authorization: Bearer …` — the API's
+mobile auth path (`JwtStrategy` falls back to the Bearer header when there's
+no cookie).
+
+## Checks
 
 ```bash
-npm run reset-project
+npx tsc --noEmit   # types
+npm run lint       # eslint
+npx expo-doctor    # dependency / config health
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

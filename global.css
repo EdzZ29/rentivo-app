@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import "nativewind/theme";
+
+/* Rentivo brand palette. Tailwind v4 is configured in CSS, so this replaces
+   the old tailwind.config.js `theme.extend.colors` block.
+
+   `brand` is sampled from the logo mark so the splash background and the logo
+   are exactly the same green; `ink` and `accent` match the web app's tokens
+   (rentflow-frontend/src/index.css) so the two storefronts look like one
+   product. */
+@theme {
+  --color-brand: #65c2ab;
+  --color-brand-dark: #4d9e8b;
+
+  --color-ink: #135776;
+  --color-ink-dark: #0f465e;
+
+  --color-accent: #56aea1;
+  --color-accent-dark: #47978b;
+
+  /* The near-black the onboarding is staged on. Ink pushed most of the way to
+     black, so the brand hue still shows in the gradient rather than flat grey. */
+  --color-night: #08151c;
+}
