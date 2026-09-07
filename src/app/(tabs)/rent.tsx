@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
@@ -11,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   BusinessCard,
   PackageCard,
@@ -77,6 +78,7 @@ export default function RentScreen() {
   // The centre "Find a rent" button and the Home shortcuts navigate here with a
   // location and/or category already chosen.
   const params = useLocalSearchParams<{ location?: string; category?: string; view?: string }>();
+  const insets = useSafeAreaInsets();
 
   const [view, setView] = useState<View3>('items');
   const [category, setCategory] = useState('');
@@ -150,8 +152,11 @@ export default function RentScreen() {
   const columns = layout === 'compact' ? 2 : 1;
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-slate-50">
-      <View className="bg-white px-5 pb-4 pt-2">
+    <View className="flex-1 bg-slate-50">
+      <StatusBar style="dark" />
+      {/* The header's own background carries the status-bar inset, so it paints
+          edge to edge behind it instead of sitting below a safe-area frame. */}
+      <View className="bg-white px-5 pb-4" style={{ paddingTop: insets.top + 10 }}>
         <Text className="text-2xl font-bold text-ink">Rent</Text>
         <Text className="mt-1 text-sm text-slate-500">
           Browse everything available to rent.
@@ -296,7 +301,7 @@ export default function RentScreen() {
         }}
         onClose={() => setLocationOpen(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter, type Href } from 'expo-router';
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
@@ -13,7 +14,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/auth';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -30,6 +31,7 @@ export default function AccountScreen() {
   const { user, restoring, signOut, refresh } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   // Re-reads GET /auth/me, so a profile edited elsewhere shows up here.
   const onRefresh = async () => {
@@ -46,18 +48,23 @@ export default function AccountScreen() {
 
   if (restoring) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-slate-50">
+      <View className="flex-1 items-center justify-center bg-slate-50">
         <ActivityIndicator color="#56aea1" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   const isOwner = user?.role === 'owner' || user?.role === 'admin';
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50">
       {/* Title bar with the settings shortcut, as on the reference. */}
-      <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
+      <StatusBar style="dark" />
+      {/* Title bar carries the status-bar inset so its white runs behind it. */}
+      <View
+        style={{ paddingTop: insets.top + 10 }}
+        className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-3"
+      >
         <Text className="text-2xl font-bold text-ink">Account</Text>
         <Pressable
           onPress={() => router.push('/settings')}
@@ -211,7 +218,7 @@ export default function AccountScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

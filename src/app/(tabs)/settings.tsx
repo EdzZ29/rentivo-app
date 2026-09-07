@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, API_URL } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useRentals } from '@/lib/rentals';
@@ -13,6 +14,7 @@ export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const { data, locations, refresh, refreshing } = useRentals();
   const [health, setHealth] = useState<Health>('checking');
+  const insets = useSafeAreaInsets();
 
   // The API's own /health endpoint — the quickest way to tell a misconfigured
   // EXPO_PUBLIC_API_URL apart from an app bug.
@@ -31,9 +33,10 @@ export default function SettingsScreen() {
   }, [check]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50">
+      <StatusBar style="dark" />
       <ScrollView contentContainerClassName="pb-10">
-        <View className="bg-white px-5 pb-4 pt-2">
+        <View className="bg-white px-5 pb-4" style={{ paddingTop: insets.top + 10 }}>
           <Text className="text-2xl font-bold text-ink">Settings</Text>
           <Text className="mt-1 text-sm text-slate-500">Connection, data and account.</Text>
         </View>
@@ -136,7 +139,7 @@ export default function SettingsScreen() {
           />
         </Section>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

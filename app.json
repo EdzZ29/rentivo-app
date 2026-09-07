@@ -37,7 +37,15 @@
         }
       ],
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Rentivo uses your location to show rentals near you.",
+          "locationWhenInUsePermission": "Rentivo uses your location to show rentals near you.",
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,18 +1,32 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BusinessCard, PackageCard, ProductCard } from '@/components/RentalCards';
+import Marquee from '@/components/Marquee';
 import { CardSkeletons, ErrorState } from '@/components/RentalStates';
 import { CATEGORIES, categoryIcon } from '@/lib/categories';
 import { useAuth } from '@/lib/auth';
 import { useRentals } from '@/lib/rentals';
+import { useCurrentLocation } from '@/lib/useCurrentLocation';
+
+// Ticker copy. Kept to things the app actually does — browsing, comparing and
+// booking against real listings — rather than claims nothing here can back up.
+const TICKER = [
+  'Browse vehicles, event gear, cameras and more',
+  'Book directly with local rental businesses',
+  'Compare prices and ratings',
+  'Rent by the day',
+  'Find rentals near you',
+];
 
 export default function HomeScreen() {
-  const { data, loading, refreshing, error, reload, refresh, locations } = useRentals();
+  const { data, loading, refreshing, error, reload, refresh } = useRentals();
   const { user } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   // Everything on this screen is a slice of the same three listings the Rent
   // tab shows — no extra requests.
@@ -43,14 +57,17 @@ export default function HomeScreen() {
 
   if (error) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-slate-50">
+      <View style={{ paddingTop: insets.top }} className="flex-1 bg-slate-50">
         <ErrorState message={error} onRetry={reload} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-slate-50">
+    // No SafeAreaView frame: the hero's colour runs edge to edge and behind the
+    // status bar, and the inset is applied to the content inside it instead.
+    <View className="flex-1 bg-slate-50">
+      <StatusBar style="light" />
       <ScrollView
         contentContainerClassName="pb-10"
         refreshControl={
@@ -62,12 +79,10 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Greeting + live totals straight from the API. */}
-        <View className="bg-ink px-5 pb-6 pt-4">
-          <Text className="text-sm text-white/70">
-            {user ? `Welcome back, ${user.fullName.split(' ')[0]}` : 'Welcome to Rentivo'}
-          </Text>
-          <Text className="mt-1 text-2xl font-bold text-white">
+        <View className="bg-ink px-5 pb-6" style={{ paddingTop: insets.top + 14 }}>
+          <LocationBar />
+
+          <Text className="mt-2 text-2xl font-bold text-white">
             What do you need today?
           </Text>
 
@@ -81,13 +96,9 @@ export default function HomeScreen() {
             <Ionicons name="chevron-forward" size={16} color="#ffffff" />
           </Pressable>
 
-          <View className="mt-4 flex-row gap-3">
-            <Stat label="Items" value={data.products.length} loading={loading} />
-            <Stat label="Packages" value={data.packages.length} loading={loading} />
-            <Stat label="Businesses" value={data.businesses.length} loading={loading} />
-            <Stat label="Locations" value={locations.length} loading={loading} />
-          </View>
         </View>
+
+        <Marquee items={TICKER} />
 
         {/* Categories */}
         <View className="mt-6">
@@ -155,24 +166,61 @@ export default function HomeScreen() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-function Stat({
-  label,
-  value,
-  loading,
-}: {
-  label: string;
-  value: number;
-  loading: boolean;
-}) {
+/**
+ * Where the user is, above the greeting.
+ *
+ * Declining the permission is a normal outcome rather than an error, so it
+ * reads as an invitation with a way back in — tapping opens the OS settings,
+ * since a second in-app prompt won't be shown once it's been refused.
+ */
+function LocationBar() {
+  const { status, label, retry } = useCurrentLocation();
+
+  const text =
+    status === 'ready'
+      ? label
+      : status === 'locating'
+        ? 'Finding your location…'
+        : status === 'denied'
+          ? 'Turn on location'
+          : 'Location unavailable';
+
+  const onPress = () => {
+    if (status === 'denied') void Linking.openSettings();
+    else if (status !== 'locating') retry();
+  };
+
   return (
-    <View className="flex-1 rounded-xl bg-white/10 px-2 py-2.5">
-      <Text className="text-lg font-bold text-white">{loading ? '—' : value}</Text>
-      <Text className="text-[10px] text-white/70">{label}</Text>
-    </View>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={
+        status === 'ready' ? `Your location: ${label}` : 'Set your location'
+      }
+      disabled={status === 'locating'}
+      className="flex-row items-center gap-2"
+    >
+      <Ionicons name="location-outline" size={16} color="#65c2ab" />
+      <View className="flex-1">
+        <Text className="text-[11px] uppercase tracking-wider text-white/50">
+          Your location
+        </Text>
+        <Text className="text-sm font-semibold text-white" numberOfLines={1}>
+          {text}
+        </Text>
+      </View>
+      {status !== 'locating' && (
+        <Ionicons
+          name={status === 'ready' ? 'refresh' : 'chevron-forward'}
+          size={15}
+          color="rgba(255,255,255,0.6)"
+        />
+      )}
+    </Pressable>
   );
 }
 

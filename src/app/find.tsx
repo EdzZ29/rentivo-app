@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState, ErrorState } from '@/components/RentalStates';
 import { cityOf } from '@/lib/format';
 import { useRentals } from '@/lib/rentals';
@@ -18,6 +19,7 @@ export default function FindScreen() {
   const { data, loading, error, reload, locations } = useRentals();
   const router = useRouter();
   const [query, setQuery] = useState('');
+  const insets = useSafeAreaInsets();
 
   const rows = useMemo(() => {
     const counts: Record<string, { items: number; packages: number; businesses: number }> = {};
@@ -43,8 +45,12 @@ export default function FindScreen() {
   };
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-white">
-      <View className="flex-row items-center gap-3 px-5 pb-3 pt-2">
+    <View className="flex-1 bg-white">
+      <StatusBar style="dark" />
+      <View
+        style={{ paddingTop: insets.top + 8 }}
+        className="flex-row items-center gap-3 px-5 pb-3"
+      >
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
@@ -132,6 +138,6 @@ export default function FindScreen() {
           )}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   );
 }

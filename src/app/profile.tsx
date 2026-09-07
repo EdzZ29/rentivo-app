@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState, type ComponentProps } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { assetUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -16,6 +16,7 @@ export default function Profile() {
   const { user, refresh } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -31,18 +32,21 @@ export default function Profile() {
   // Signing out from elsewhere while this is open leaves nothing to show.
   if (!user) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-slate-50">
+      <View className="flex-1 items-center justify-center bg-slate-50">
         <Text className="text-sm text-slate-500">You&apos;re not signed in.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   const avatar = assetUrl(user.avatarUrl);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-slate-50">
       <StatusBar style="dark" />
-      <View className="flex-row items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
+      <View
+        style={{ paddingTop: insets.top + 10 }}
+        className="flex-row items-center gap-3 border-b border-slate-200 bg-white px-4 pb-3"
+      >
         <Pressable
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/account'))}
           accessibilityRole="button"
@@ -92,7 +96,7 @@ export default function Profile() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

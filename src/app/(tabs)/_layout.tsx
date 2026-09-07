@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ACTIVE = '#47978b';
 const INACTIVE = '#94a3b8';
@@ -33,17 +34,22 @@ function FindARentButton() {
 }
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: ACTIVE,
         tabBarInactiveTintColor: INACTIVE,
+        // Screens draw edge to edge, so the bar has to reserve the bottom inset
+        // itself — a fixed height would sit under the gesture bar.
         tabBarStyle: {
           backgroundColor: '#ffffff',
           borderTopColor: '#e2e8f0',
-          height: Platform.OS === 'ios' ? 88 : 64,
+          height: 62 + insets.bottom,
           paddingTop: 6,
+          paddingBottom: insets.bottom,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
       }}
