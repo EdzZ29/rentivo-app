@@ -2,13 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
-import { Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Linking, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { DURATION, stagger } from '@/lib/motion';
+import PressableScale from '@/components/motion/PressableScale';
 import { BusinessCard, PackageCard, ProductCard } from '@/components/RentalCards';
 import Marquee from '@/components/Marquee';
-import { CardSkeletons, ErrorState } from '@/components/RentalStates';
+import { ErrorState } from '@/components/RentalStates';
+import { HomeSkeleton } from '@/components/Skeleton';
 import { CATEGORIES, categoryIcon } from '@/lib/categories';
-import { useAuth } from '@/lib/auth';
 import { useRentals } from '@/lib/rentals';
 import { useCurrentLocation } from '@/lib/useCurrentLocation';
 
@@ -24,7 +27,6 @@ const TICKER = [
 
 export default function HomeScreen() {
   const { data, loading, refreshing, error, reload, refresh } = useRentals();
-  const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -44,20 +46,12 @@ export default function HomeScreen() {
   );
   const deals = useMemo(() => data.packages.slice(0, 5), [data.packages]);
 
-  const counts = useMemo(() => {
-    const map: Record<string, number> = {};
-    data.products.forEach((p) => {
-      if (p.category) map[p.category] = (map[p.category] ?? 0) + 1;
-    });
-    return map;
-  }, [data.products]);
-
   const goToRent = (params: Record<string, string> = {}) =>
     router.push({ pathname: '/rent', params });
 
   if (error) {
     return (
-      <View style={{ paddingTop: insets.top }} className="flex-1 bg-slate-50">
+      <View style={{ paddingTop: insets.top }} className="flex-1 bg-surface">
         <ErrorState message={error} onRetry={reload} />
       </View>
     );
@@ -66,7 +60,7 @@ export default function HomeScreen() {
   return (
     // No SafeAreaView frame: the hero's colour runs edge to edge and behind the
     // status bar, and the inset is applied to the content inside it instead.
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-surface">
       <StatusBar style="light" />
       <ScrollView
         contentContainerClassName="pb-10"
@@ -74,8 +68,8 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={refresh}
-            tintColor="#56aea1"
-            colors={['#56aea1']}
+            tintColor="#006e59"
+            colors={['#006e59']}
           />
         }
       >
@@ -86,7 +80,7 @@ export default function HomeScreen() {
             What do you need today?
           </Text>
 
-          <Pressable
+          <PressableScale
             onPress={() => router.push('/find')}
             accessibilityRole="button"
             className="mt-4 flex-row items-center gap-2 rounded-xl bg-white/15 px-4 py-3 active:bg-white/25"
@@ -94,7 +88,7 @@ export default function HomeScreen() {
             <Ionicons name="location" size={18} color="#ffffff" />
             <Text className="flex-1 text-sm text-white/90">Find a rent near you</Text>
             <Ionicons name="chevron-forward" size={16} color="#ffffff" />
-          </Pressable>
+          </PressableScale>
 
         </View>
 
@@ -102,65 +96,81 @@ export default function HomeScreen() {
 
         {/* Categories */}
         <View className="mt-6">
-          <SectionHeader title="Browse by category" />
+          <SectionHeader title="Browse by category" onSeeAll={() => goToRent()} />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerClassName="gap-3 px-5"
           >
-            {CATEGORIES.map((c) => (
-              <Pressable
+            {CATEGORIES.map((c, i) => (
+              <PressableScale
                 key={c.name}
+                entering={FadeInDown.duration(DURATION.base).delay(stagger(i))}
                 onPress={() => goToRent({ category: c.name })}
                 accessibilityRole="button"
-                className="w-24 items-center gap-2 rounded-2xl border border-slate-200 bg-white p-3 active:bg-slate-50"
+                className="w-[76px] items-center"
               >
-                <View className="h-11 w-11 items-center justify-center rounded-full bg-accent/10">
-                  <Ionicons name={categoryIcon(c.name)} size={20} color="#47978b" />
+                {/* Fixed square, and a fixed-height label box below it, so every
+                    tile is identical whether its name wraps to one line or two. */}
+                <View className="h-[76px] w-[76px] items-center justify-center rounded-2xl bg-brand/10">
+                  <Ionicons name={categoryIcon(c.name)} size={30} color="#006e59" />
                 </View>
-                <Text className="text-center text-xs font-medium text-ink" numberOfLines={2}>
+                <Text
+                  style={{ height: 30 }}
+                  className="mt-2 text-center text-[11px] font-medium leading-[15px] text-ink"
+                  numberOfLines={2}
+                >
                   {c.name}
                 </Text>
-                <Text className="text-[10px] text-slate-400">{counts[c.name] ?? 0}</Text>
-              </Pressable>
+              </PressableScale>
             ))}
           </ScrollView>
         </View>
 
         {loading ? (
-          <View className="mt-6 px-5">
-            <CardSkeletons count={2} />
-          </View>
+          <HomeSkeleton />
         ) : (
           <>
             <Row
               title="Most booked"
               empty="No items published yet."
               onSeeAll={() => goToRent({ view: 'items' })}
-              items={featured.map((p) => (
-                <View key={p.id} className="w-64">
+              items={featured.map((p, i) => (
+                <Animated.View
+                  key={p.id}
+                  entering={FadeInDown.duration(DURATION.base).delay(stagger(i))}
+                  style={{ width: 256 }}
+                >
                   <ProductCard item={p} />
-                </View>
+                </Animated.View>
               ))}
             />
             <Row
               title="Packages"
               empty="No packages published yet."
               onSeeAll={() => goToRent({ view: 'packages' })}
-              items={deals.map((p) => (
-                <View key={p.id} className="w-64">
+              items={deals.map((p, i) => (
+                <Animated.View
+                  key={p.id}
+                  entering={FadeInDown.duration(DURATION.base).delay(stagger(i))}
+                  style={{ width: 256 }}
+                >
                   <PackageCard item={p} />
-                </View>
+                </Animated.View>
               ))}
             />
             <Row
               title="Top rated businesses"
               empty="No rated businesses yet."
               onSeeAll={() => goToRent({ view: 'businesses' })}
-              items={topRated.map((b) => (
-                <View key={b.id} className="w-64">
+              items={topRated.map((b, i) => (
+                <Animated.View
+                  key={b.id}
+                  entering={FadeInDown.duration(DURATION.base).delay(stagger(i))}
+                  style={{ width: 256 }}
+                >
                   <BusinessCard item={b} />
-                </View>
+                </Animated.View>
               ))}
             />
           </>
@@ -171,56 +181,68 @@ export default function HomeScreen() {
 }
 
 /**
- * Where the user is, above the greeting.
+ * Where the user is.
  *
- * Declining the permission is a normal outcome rather than an error, so it
- * reads as an invitation with a way back in — tapping opens the OS settings,
- * since a second in-app prompt won't be shown once it's been refused.
+ * Once a place is known this is plain text with nothing to tap — the hook keeps
+ * it current on its own as the device moves, so there's no refresh to offer.
+ * It only becomes actionable when something needs fixing: declining permission
+ * is a normal outcome, and tapping then opens the OS settings, since a second
+ * in-app prompt won't be shown once it's been refused.
  */
 function LocationBar() {
   const { status, label, retry } = useCurrentLocation();
 
-  const text =
-    status === 'ready'
-      ? label
-      : status === 'locating'
-        ? 'Finding your location…'
-        : status === 'denied'
-          ? 'Turn on location'
-          : 'Location unavailable';
+  const Row = ({ children }: { children: React.ReactNode }) => (
+    <View className="flex-row items-center gap-2">
+      <Ionicons name="location" size={16} color="#006e59" />
+      <View className="flex-1">
+        <Text className="text-[11px] uppercase tracking-wider text-white/50">
+          Your location
+        </Text>
+        {children}
+      </View>
+    </View>
+  );
 
-  const onPress = () => {
-    if (status === 'denied') void Linking.openSettings();
-    else if (status !== 'locating') retry();
-  };
+  if (status === 'ready') {
+    return (
+      <Row>
+        <Text className="text-sm font-semibold text-white" numberOfLines={1}>
+          {label}
+        </Text>
+      </Row>
+    );
+  }
 
+  if (status === 'locating') {
+    return (
+      <Row>
+        <Text className="text-sm font-semibold text-white/70">
+          Finding your location…
+        </Text>
+      </Row>
+    );
+  }
+
+  // Denied or unavailable — the only states worth a tap.
   return (
-    <Pressable
-      onPress={onPress}
+    <PressableScale
+      onPress={() => (status === 'denied' ? void Linking.openSettings() : retry())}
       accessibilityRole="button"
-      accessibilityLabel={
-        status === 'ready' ? `Your location: ${label}` : 'Set your location'
-      }
-      disabled={status === 'locating'}
+      accessibilityLabel="Set your location"
       className="flex-row items-center gap-2"
     >
-      <Ionicons name="location-outline" size={16} color="#65c2ab" />
+      <Ionicons name="location-outline" size={16} color="#006e59" />
       <View className="flex-1">
         <Text className="text-[11px] uppercase tracking-wider text-white/50">
           Your location
         </Text>
         <Text className="text-sm font-semibold text-white" numberOfLines={1}>
-          {text}
+          {status === 'denied' ? 'Turn on location' : 'Location unavailable'}
         </Text>
       </View>
-      {status !== 'locating' && (
-        <Ionicons
-          name={status === 'ready' ? 'refresh' : 'chevron-forward'}
-          size={15}
-          color="rgba(255,255,255,0.6)"
-        />
-      )}
-    </Pressable>
+      <Ionicons name="chevron-forward" size={15} color="rgba(255,255,255,0.6)" />
+    </PressableScale>
   );
 }
 
@@ -229,9 +251,9 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
     <View className="mb-3 flex-row items-center justify-between px-5">
       <Text className="text-base font-semibold text-ink">{title}</Text>
       {onSeeAll && (
-        <Pressable onPress={onSeeAll} accessibilityRole="button" hitSlop={8}>
-          <Text className="text-xs font-semibold text-accent-dark">See all</Text>
-        </Pressable>
+        <PressableScale onPress={onSeeAll} accessibilityRole="button" hitSlop={8}>
+          <Text className="text-xs font-semibold text-brand">See All</Text>
+        </PressableScale>
       )}
     </View>
   );

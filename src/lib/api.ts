@@ -193,6 +193,27 @@ export interface AuthResponse {
   user: Profile;
 }
 
+export interface LegalSection {
+  heading: string;
+  body: string[];
+  bullets?: string[];
+}
+
+export interface LegalDocument {
+  slug: string;
+  title: string;
+  summary: string;
+  version: string;
+  effectiveDate: string;
+  sections: LegalSection[];
+}
+
+export interface LegalIndex {
+  version: string;
+  effectiveDate: string;
+  documents: { slug: string; title: string; summary: string }[];
+}
+
 type BrowseParams = { category?: string; q?: string };
 
 export const api = {
@@ -208,10 +229,21 @@ export const api = {
       request<Business[]>(`/rentals${qs(p)}`, { signal }),
   },
 
+  legal: {
+    list: (signal?: AbortSignal) => request<LegalIndex>('/legal', { signal }),
+    get: (slug: string, signal?: AbortSignal) =>
+      request<LegalDocument>(`/legal/${slug}`, { signal }),
+  },
+
   auth: {
     login: (body: { email: string; password: string }) =>
       request<AuthResponse>('/auth/login', { method: 'POST', body }),
-    register: (body: { fullName: string; email: string; password: string }) =>
+    register: (body: {
+      fullName: string;
+      email: string;
+      password: string;
+      acceptedTerms?: boolean;
+    }) =>
       request<AuthResponse>('/auth/register', { method: 'POST', body }),
     me: (token: string, signal?: AbortSignal) =>
       request<Profile>('/auth/me', { token, signal }),

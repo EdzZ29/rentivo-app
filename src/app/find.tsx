@@ -2,10 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
+import { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import PressableScale from '@/components/motion/PressableScale';
 import { EmptyState, ErrorState } from '@/components/RentalStates';
 import { cityOf } from '@/lib/format';
+import { DURATION, stagger } from '@/lib/motion';
 import { useRentals } from '@/lib/rentals';
 
 /**
@@ -51,15 +54,15 @@ export default function FindScreen() {
         style={{ paddingTop: insets.top + 8 }}
         className="flex-row items-center gap-3 px-5 pb-3"
       >
-        <Pressable
+        <PressableScale
           onPress={() => router.back()}
           accessibilityRole="button"
           accessibilityLabel="Close"
           hitSlop={8}
           className="h-9 w-9 items-center justify-center rounded-full bg-slate-100"
         >
-          <Ionicons name="close" size={18} color="#135776" />
-        </Pressable>
+          <Ionicons name="close" size={18} color="#006e59" />
+        </PressableScale>
         <View className="flex-1">
           <Text className="text-lg font-bold text-ink">Find a rent</Text>
           <Text className="text-xs text-slate-500">Pick a location to browse</Text>
@@ -77,9 +80,9 @@ export default function FindScreen() {
           className="flex-1 py-3 text-sm text-ink"
         />
         {query.length > 0 && (
-          <Pressable onPress={() => setQuery('')} hitSlop={8} accessibilityLabel="Clear">
+          <PressableScale onPress={() => setQuery('')} hitSlop={8} accessibilityLabel="Clear">
             <Ionicons name="close-circle" size={18} color="#cbd5e1" />
-          </Pressable>
+          </PressableScale>
         )}
       </View>
 
@@ -87,18 +90,18 @@ export default function FindScreen() {
         <ErrorState message={error} onRetry={reload} />
       ) : (
         <ScrollView contentContainerClassName="px-5 pb-10 pt-4" keyboardShouldPersistTaps="handled">
-          <Pressable
+          <PressableScale
             onPress={() => pick('')}
             accessibilityRole="button"
-            className="mb-3 flex-row items-center gap-3 rounded-2xl border border-accent bg-accent/10 p-4 active:bg-accent/20"
+            className="mb-3 flex-row items-center gap-3 rounded-2xl border border-brand bg-brand/10 p-4 active:bg-brand/20"
           >
-            <Ionicons name="globe-outline" size={20} color="#47978b" />
+            <Ionicons name="globe-outline" size={20} color="#006e59" />
             <View className="flex-1">
-              <Text className="text-sm font-semibold text-accent-dark">Anywhere</Text>
+              <Text className="text-sm font-semibold text-brand">Anywhere</Text>
               <Text className="text-xs text-slate-500">Browse every location</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#47978b" />
-          </Pressable>
+            <Ionicons name="chevron-forward" size={16} color="#006e59" />
+          </PressableScale>
 
           {loading ? (
             <Text className="py-10 text-center text-sm text-slate-400">Loading locations…</Text>
@@ -111,15 +114,16 @@ export default function FindScreen() {
               }
             />
           ) : (
-            rows.map((row) => (
-              <Pressable
+            rows.map((row, i) => (
+              <PressableScale
                 key={row.location}
+                entering={FadeInDown.duration(DURATION.base).delay(stagger(i))}
                 onPress={() => pick(row.location)}
                 accessibilityRole="button"
                 className="mb-3 flex-row items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 active:bg-slate-50"
               >
-                <View className="h-10 w-10 items-center justify-center rounded-full bg-accent/10">
-                  <Ionicons name="location" size={18} color="#47978b" />
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-brand/10">
+                  <Ionicons name="location" size={18} color="#006e59" />
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-semibold text-ink">{cityOf(row.location)}</Text>
@@ -133,7 +137,7 @@ export default function FindScreen() {
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
-              </Pressable>
+              </PressableScale>
             ))
           )}
         </ScrollView>

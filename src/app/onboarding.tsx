@@ -1,10 +1,9 @@
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image, type ImageSource } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   FlatList,
-  Pressable,
   Text,
   useWindowDimensions,
   View,
@@ -19,64 +18,132 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ArtAllInOne,
-  ArtGetStarted,
-  ArtManage,
-  ArtMarketplace,
-} from '@/components/OnboardingArt';
+import PressableScale from '@/components/motion/PressableScale';
 import { useOnboarding } from '@/lib/onboarding';
+
+type Photo = ImageSource | number;
+
+// The three photographs in the project, rotated through the collage so each
+// slide reads differently without needing more assets.
+const VENUE: Photo = require('@/assets/images/image.jpg');
+const STUDIO: Photo = require('@/assets/images/onboarding.jpg');
+const EVENT: Photo = require('@/assets/images/onboarding_3.jpg');
 
 interface Slide {
   key: string;
-  art: () => React.ReactElement;
+  /** [tall left, short right, wide bottom] */
+  photos: [Photo, Photo, Photo];
   title: string;
+  /** Closing words of the heading, set in the brand colour. */
+  titleAccent: string;
   body: string;
 }
 
 const SLIDES: Slide[] = [
   {
     key: 'all-in-one',
-    art: ArtAllInOne,
-    title: 'All in One Place',
-    body: 'Manage bookings, inventory, customers, payments and more with Rentivo.',
+    photos: [VENUE, STUDIO, EVENT],
+    title: 'Rent Almost',
+    titleAccent: 'Anything',
+    body: 'Vehicles, event gear, cameras and tools from local businesses near you.',
   },
   {
     key: 'manage',
-    art: ArtManage,
-    title: 'Manage Effortlessly',
-    body: 'Keep everything organized — from reservations and inventory to payments and reports.',
+    photos: [STUDIO, EVENT, VENUE],
+    title: 'Manage It All',
+    titleAccent: 'Effortlessly',
+    body: 'Keep everything organized from reservations and inventory to payments and reports.',
   },
   {
     key: 'marketplace',
-    art: ArtMarketplace,
-    title: 'Reach More Customers',
+    photos: [EVENT, VENUE, STUDIO],
+    title: 'Reach More',
+    titleAccent: 'Customers',
     body: 'Upgrade to the Marketplace Plan and let customers discover, compare, and book online.',
   },
   {
     key: 'get-started',
-    art: ArtGetStarted,
-    title: 'Ready to Get Started?',
+    photos: [VENUE, EVENT, STUDIO],
+    title: 'Ready to',
+    titleAccent: 'Get Started?',
     body: 'Join Rentivo today and experience a smarter way to manage and grow your rental business.',
   },
 ];
 
 const LAST = SLIDES.length - 1;
 
+// Both footer buttons are exactly this tall, so the empty second slot on the
+// first three slides reserves precisely the right space.
+const BUTTON_HEIGHT = 56;
+
+/**
+ * A three-photo collage: one tall tile, one short beside it, one wide beneath.
+ * The bottom tile is nudged in from the left so the block reads as an
+ * arrangement rather than a grid.
+ */
+function Collage({ photos }: { photos: [Photo, Photo, Photo] }) {
+  const tile = 'overflow-hidden rounded-3xl bg-slate-100';
+  return (
+    <View>
+      <View className="flex-row gap-3">
+        <View style={{ flex: 1.15, height: 188 }} className={tile}>
+          <Image source={photos[0]} style={{ flex: 1 }} contentFit="cover" transition={220} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ height: 132 }} className={tile}>
+            <Image source={photos[1]} style={{ flex: 1 }} contentFit="cover" transition={220} />
+          </View>
+        </View>
+      </View>
+
+      <View style={{ height: 124 }} className={`${tile} ml-7 mt-3`}>
+        <Image source={photos[2]} style={{ flex: 1 }} contentFit="cover" transition={220} />
+      </View>
+
+      {/* The app mark, tucked into the corner of the arrangement. */}
+      <View
+        className="absolute -bottom-3 right-1 h-12 w-12 items-center justify-center rounded-2xl bg-white"
+        style={{
+          shadowColor: '#006e59',
+          shadowOpacity: 0.18,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 4,
+        }}
+      >
+        {/* The mark, not the 1024px app icon — a 34px badge shouldn't carry a
+            4 MB bitmap. */}
+        <Image
+          source={require('@/assets/images/logo-green.png')}
+          style={{ width: 26, height: 26 }}
+          contentFit="contain"
+        />
+      </View>
+    </View>
+  );
+}
+
 export default function Onboarding() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { dismiss } = useOnboarding();
+  const listRef = useRef<FlatList<Slide>>(null);
   const [index, setIndex] = useState(0);
   const [pageHeight, setPageHeight] = useState(0);
   // Live scroll offset. The indicator reads this rather than `index`, so it
   // tracks the drag itself instead of snapping once the page settles.
   const scrollX = useSharedValue(0);
 
-  // Guest and Skip: dismissing flips the route guard in the root layout, and
-  // expo-router lands on Home by itself — no navigation call needed.
+  // Dismissing flips the route guard in the root layout, and expo-router lands
+  // on Home by itself — no navigation call needed.
   const browseAsGuest = () => dismiss();
+
+  // Skip jumps to the closing slide rather than leaving the intro, so the
+  // sign-in / guest choice is still made deliberately. `index` is left to
+  // onScroll so it tracks the animation instead of jumping ahead of it.
+  const skipToEnd = () =>
+    listRef.current?.scrollToOffset({ offset: LAST * width, animated: true });
 
   // Sign in / create account: push the credentials screen and deliberately do
   // NOT dismiss. The intro stays mounted underneath, so backing out of the form
@@ -97,17 +164,36 @@ export default function Onboarding() {
   const isLast = index === LAST;
 
   return (
-    // Full-bleed: the artwork runs edge to edge and under the status bar, so
-    // insets are applied to the content rather than to a SafeAreaView frame.
-    <View className="flex-1 bg-night">
-      <StatusBar style="light" />
+    <View className="flex-1 bg-white">
+      <StatusBar style="dark" />
+
+      {/* Skip sits above the pager so it stays put while pages move. */}
+      <View
+        style={{ paddingTop: insets.top + 6 }}
+        className="h-11 flex-row items-center justify-end px-7"
+      >
+        {!isLast ? (
+          <PressableScale
+            onPress={skipToEnd}
+            accessibilityRole="button"
+            accessibilityLabel="Skip to the last step"
+            hitSlop={12}
+          >
+            <Text className="text-sm text-slate-400">Skip</Text>
+          </PressableScale>
+        ) : (
+          // Keeps the row's height steady once Skip goes away.
+          <View style={{ height: 20 }} />
+        )}
+      </View>
 
       {/* Only this area pages. The indicator and the actions below sit outside
-          the list, so swiping moves the artwork and its copy while everything
+          the list, so swiping moves the collage and its copy while everything
           else stays exactly where it is. */}
       <View className="flex-1" onLayout={(e) => setPageHeight(e.nativeEvent.layout.height)}>
         {pageHeight > 0 && (
           <FlatList
+            ref={listRef}
             data={SLIDES}
             keyExtractor={(s) => s.key}
             horizontal
@@ -115,102 +201,74 @@ export default function Onboarding() {
             showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
             onScroll={onScroll}
-            renderItem={({ item }) => {
-              const Art = item.art;
-              return (
-                <View style={{ width, height: pageHeight }}>
-                  <View
-                    style={{ paddingTop: insets.top + 56 }}
-                    className="absolute inset-x-0 top-0 items-center"
-                  >
-                    <Art />
-                  </View>
-                  {/* Styled inline, not with className: Nativewind's polyfill
-                      only covers react-native's own components plus
-                      safe-area-context, so a className here would be dropped
-                      and the scrim would never position. */}
-                  <LinearGradient
-                    colors={['transparent', 'rgba(8,21,28,0.75)', '#08151c']}
-                    locations={[0, 0.45, 0.72]}
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      top: '30%',
-                    }}
-                  />
-                  <View className="absolute inset-x-0 bottom-0 px-7">
-                    <Text className="text-[32px] font-bold leading-10 text-white">
-                      {item.title}
-                    </Text>
-                    <Text className="mt-3 text-[15px] leading-6 text-white/60">
-                      {item.body}
-                    </Text>
-                  </View>
+            // Each page carries three photographs, so keep the mounted window
+            // tight rather than rendering all four pages up front.
+            initialNumToRender={1}
+            maxToRenderPerBatch={1}
+            windowSize={2}
+            renderItem={({ item }) => (
+              <View style={{ width, height: pageHeight }} className="justify-center px-7">
+                <Collage photos={item.photos} />
+
+                <View className="mt-12">
+                  <Text className="text-[30px] font-bold leading-9 text-slate-900">
+                    {item.title}
+                  </Text>
+                  <Text className="text-[30px] font-bold leading-9 text-brand">
+                    {item.titleAccent}
+                  </Text>
+                  <Text className="mt-3 text-[13px] leading-5 text-slate-500">
+                    {item.body}
+                  </Text>
                 </View>
-              );
-            }}
+              </View>
+            )}
           />
         )}
       </View>
 
-      {/* Fixed footer. Two slots on every slide so its height never changes —
-          a footer that grew on the last page would resize the pager above it
-          and shift the artwork mid-swipe. */}
-      <View style={{ paddingBottom: insets.bottom + 20 }} className="bg-night px-7 pt-7">
+      {/* Fixed footer. The second slot keeps its height on every slide even
+          when empty: a footer that grew on the last page would resize the
+          pager above it and shift the collage mid-swipe. */}
+      <View style={{ paddingBottom: insets.bottom + 20 }} className="bg-white px-7 pt-2">
         <Dots scrollX={scrollX} width={width} className="mb-6" />
         <FilledButton
           label={isLast ? 'Sign In' : 'Create Account'}
           onPress={() => goToAuth(!isLast)}
         />
-        <View className="mt-3">
-          <OutlineButton label="Continue as Guest" onPress={browseAsGuest} />
+        <View className="mt-3" style={{ height: BUTTON_HEIGHT }}>
+          {isLast && <OutlineButton label="Continue as Guest" onPress={browseAsGuest} />}
         </View>
       </View>
-
-      {/* Skip sits above the pager so it stays put while pages move. */}
-      {!isLast && (
-        <Pressable
-          onPress={browseAsGuest}
-          accessibilityRole="button"
-          accessibilityLabel="Skip onboarding"
-          hitSlop={12}
-          style={{ top: insets.top + 8 }}
-          className="absolute right-6"
-        >
-          <Text className="text-xs font-semibold tracking-[2px] text-white/70">SKIP</Text>
-        </Pressable>
-      )}
     </View>
   );
 }
 
 function FilledButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      className="items-center rounded-2xl bg-white py-[18px] active:bg-white/80"
+      className="h-14 items-center justify-center rounded-2xl bg-brand active:bg-brand-dark"
     >
-      <Text className="text-[13px] font-bold tracking-[1.5px] text-night">
+      <Text className="text-[13px] font-bold tracking-[1.5px] text-white">
         {label.toUpperCase()}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 function OutlineButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      className="items-center rounded-2xl border border-white/40 py-[18px] active:bg-white/10"
+      className="h-14 items-center justify-center rounded-2xl border border-brand active:bg-brand/10"
     >
-      <Text className="text-[13px] font-bold tracking-[1.5px] text-white">
+      <Text className="text-[13px] font-bold tracking-[1.5px] text-brand">
         {label.toUpperCase()}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -261,11 +319,7 @@ function Dot({
 
     return {
       width: interpolate(distance, [0, 1], [PILL, DOT]),
-      backgroundColor: interpolateColor(
-        distance,
-        [0, 1],
-        ['#ffffff', 'rgba(255,255,255,0.3)'],
-      ),
+      backgroundColor: interpolateColor(distance, [0, 1], ['#006e59', '#e2e8f0']),
     };
   });
 

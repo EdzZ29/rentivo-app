@@ -7,13 +7,15 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { DURATION } from '@/lib/motion';
+import PressableScale from '@/components/motion/PressableScale';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/lib/onboarding';
@@ -45,11 +47,15 @@ export default function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const [accepted, setAccepted] = useState(false);
+
   const isRegister = mode === 'register';
+  // Registering additionally requires the consent box — the Data Privacy Act
+  // wants consent given knowingly, so it starts unticked and gates submission.
   const canSubmit =
     email.trim().length > 0 &&
     password.length > 0 &&
-    (!isRegister || fullName.trim().length > 0);
+    (!isRegister || (fullName.trim().length > 0 && accepted));
 
   const submit = async () => {
     if (!canSubmit || busy) return;
@@ -57,7 +63,7 @@ export default function SignIn() {
     setNotice(null);
     setBusy(true);
     try {
-      if (isRegister) await register(fullName, email, password);
+      if (isRegister) await register(fullName, email, password, accepted);
       else await signIn(email, password);
 
       // Signing in satisfies the intro's guard on its own; dismissing keeps the
@@ -118,15 +124,15 @@ export default function SignIn() {
           contentContainerClassName="px-6"
           keyboardShouldPersistTaps="handled"
         >
-          <Pressable
+          <PressableScale
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
             accessibilityRole="button"
             accessibilityLabel="Go back"
             hitSlop={12}
             className="h-10 w-10 items-center justify-center rounded-full"
           >
-            <Ionicons name="arrow-back" size={20} color="#135776" />
-          </Pressable>
+            <Ionicons name="arrow-back" size={20} color="#006e59" />
+          </PressableScale>
 
           {/* Lockup */}
           <View className="mt-6 items-center">
@@ -136,7 +142,7 @@ export default function SignIn() {
               contentFit="contain"
             />
             <Text className="mt-1 text-4xl font-bold tracking-tight text-ink">
-              Rentiv<Text className="text-accent">o</Text>
+              Rentiv<Text className="text-brand">o</Text>
             </Text>
           </View>
 
@@ -147,10 +153,11 @@ export default function SignIn() {
           </Text>
 
           {/* Form card */}
-          <View
+          <Animated.View
+            entering={FadeInDown.duration(DURATION.slow)}
             className="mt-7 rounded-3xl bg-white p-5"
             style={{
-              shadowColor: '#135776',
+              shadowColor: '#006e59',
               shadowOpacity: 0.06,
               shadowRadius: 16,
               shadowOffset: { width: 0, height: 6 },
@@ -189,7 +196,7 @@ export default function SignIn() {
                 onSubmitEditing={() => void submit()}
                 returnKeyType="go"
                 trailing={
-                  <Pressable
+                  <PressableScale
                     onPress={() => setReveal((v) => !v)}
                     accessibilityRole="button"
                     accessibilityLabel={reveal ? 'Hide password' : 'Show password'}
@@ -200,13 +207,55 @@ export default function SignIn() {
                       size={20}
                       color="#64748b"
                     />
-                  </Pressable>
+                  </PressableScale>
                 }
               />
             </View>
 
+            {isRegister && (
+              <PressableScale
+                onPress={() => setAccepted((v) => !v)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: accepted }}
+                accessibilityLabel="Agree to the Terms, Privacy Policy and Form Consent"
+                className="mt-4 flex-row items-start gap-3"
+              >
+                <View
+                  className={`mt-0.5 h-5 w-5 items-center justify-center rounded border-2 ${
+                    accepted ? 'border-brand bg-brand' : 'border-slate-300'
+                  }`}
+                >
+                  {accepted && <Ionicons name="checkmark" size={14} color="#ffffff" />}
+                </View>
+                <Text className="flex-1 text-xs leading-5 text-slate-500">
+                  I agree to Rentivo&apos;s{' '}
+                  <Text
+                    className="font-semibold text-ink underline"
+                    onPress={() => router.push('/legal/terms-and-conditions')}
+                  >
+                    Terms and Conditions
+                  </Text>
+                  ,{' '}
+                  <Text
+                    className="font-semibold text-ink underline"
+                    onPress={() => router.push('/legal/privacy-policy')}
+                  >
+                    Privacy Policy
+                  </Text>{' '}
+                  and{' '}
+                  <Text
+                    className="font-semibold text-ink underline"
+                    onPress={() => router.push('/legal/form-consent')}
+                  >
+                    Form Consent
+                  </Text>
+                  .
+                </Text>
+              </PressableScale>
+            )}
+
             {!isRegister && (
-              <Pressable
+              <PressableScale
                 onPress={() => void forgotPassword()}
                 accessibilityRole="button"
                 hitSlop={8}
@@ -215,7 +264,7 @@ export default function SignIn() {
                 <Text className="text-sm font-semibold text-ink underline">
                   Forgot your password?
                 </Text>
-              </Pressable>
+              </PressableScale>
             )}
 
             {!!error && (
@@ -225,7 +274,7 @@ export default function SignIn() {
               <Banner tone="notice" icon="mail-outline" text={notice} />
             )}
 
-            <Pressable
+            <PressableScale
               onPress={() => void submit()}
               disabled={!canSubmit || busy}
               accessibilityRole="button"
@@ -237,18 +286,18 @@ export default function SignIn() {
               <Text className="text-base font-bold text-white">
                 {isRegister ? 'Create account' : 'Sign in'}
               </Text>
-            </Pressable>
+            </PressableScale>
 
-            <Pressable
+            <PressableScale
               onPress={browseAsGuest}
               accessibilityRole="button"
               className="mt-3 h-14 items-center justify-center rounded-2xl border-2 border-ink active:bg-slate-50"
             >
               <Text className="text-base font-bold text-ink">Continue as Guest</Text>
-            </Pressable>
-          </View>
+            </PressableScale>
+          </Animated.View>
 
-          <Pressable
+          <PressableScale
             onPress={swap}
             accessibilityRole="button"
             className="mt-6 items-center py-2"
@@ -259,7 +308,7 @@ export default function SignIn() {
                 {isRegister ? 'Sign in' : 'Sign up'}
               </Text>
             </Text>
-          </Pressable>
+          </PressableScale>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -279,12 +328,12 @@ function Banner({
   return (
     <View
       className={`mt-4 flex-row items-center gap-2 rounded-xl px-3 py-2.5 ${
-        error ? 'bg-red-50' : 'bg-accent/10'
+        error ? 'bg-red-50' : 'bg-brand/10'
       }`}
     >
-      <Ionicons name={icon} size={16} color={error ? '#dc2626' : '#47978b'} />
+      <Ionicons name={icon} size={16} color={error ? '#dc2626' : '#006e59'} />
       <Text
-        className={`flex-1 text-xs ${error ? 'text-red-700' : 'text-accent-dark'}`}
+        className={`flex-1 text-xs ${error ? 'text-red-700' : 'text-brand'}`}
       >
         {text}
       </Text>

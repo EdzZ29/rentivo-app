@@ -5,14 +5,15 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   Modal,
-  Pressable,
   RefreshControl,
   ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import PressableScale from '@/components/motion/PressableScale';
 import {
   BusinessCard,
   PackageCard,
@@ -23,6 +24,7 @@ import { CardSkeletons, EmptyState, ErrorState } from '@/components/RentalStates
 import type { Business, Product, RentalPackage } from '@/lib/api';
 import { CATEGORIES, categoryIcon } from '@/lib/categories';
 import { cityOf } from '@/lib/format';
+import { DURATION, stagger } from '@/lib/motion';
 import { useRentals } from '@/lib/rentals';
 
 type View3 = 'items' | 'packages' | 'businesses';
@@ -152,7 +154,7 @@ export default function RentScreen() {
   const columns = layout === 'compact' ? 2 : 1;
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-surface">
       <StatusBar style="dark" />
       {/* The header's own background carries the status-bar inset, so it paints
           edge to edge behind it instead of sitting below a safe-area frame. */}
@@ -174,14 +176,14 @@ export default function RentScreen() {
             className="flex-1 py-3 text-sm text-ink"
           />
           {search.length > 0 && (
-            <Pressable
+            <PressableScale
               onPress={() => setSearch('')}
               accessibilityRole="button"
               accessibilityLabel="Clear search"
               hitSlop={8}
             >
               <Ionicons name="close-circle" size={18} color="#cbd5e1" />
-            </Pressable>
+            </PressableScale>
           )}
         </View>
 
@@ -189,21 +191,22 @@ export default function RentScreen() {
           {VIEWS.map((tab) => {
             const active = view === tab.key;
             return (
-              <Pressable
+              <PressableScale
                 key={tab.key}
                 onPress={() => changeView(tab.key)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
+                wrapperStyle={{ flex: 1 }}
                 className={`flex-1 items-center rounded-lg py-2 ${active ? 'bg-white' : ''}`}
               >
                 <Text
                   className={`text-sm font-semibold ${
-                    active ? 'text-accent-dark' : 'text-slate-500'
+                    active ? 'text-brand' : 'text-slate-500'
                   }`}
                 >
                   {tab.label}
                 </Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
@@ -222,12 +225,16 @@ export default function RentScreen() {
           contentContainerClassName="px-5 pb-10"
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
+          // Cards carry remote photographs; cap how many stay mounted.
+          initialNumToRender={6}
+          maxToRenderPerBatch={6}
+          windowSize={7}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={refresh}
-              tintColor="#56aea1"
-              colors={['#56aea1']}
+              tintColor="#006e59"
+              colors={['#006e59']}
             />
           }
           ListHeaderComponent={
@@ -261,8 +268,14 @@ export default function RentScreen() {
               />
             )
           }
-          renderItem={({ item }) => (
-            <View className={columns > 1 ? 'mb-3 flex-1' : 'mb-3'}>
+          renderItem={({ item, index: i }) => (
+            // Cards rise in, staggered. Keys include the view, so switching
+            // tab or filter mounts fresh rows and the entrance replays —
+            // which is what makes a filter change feel like a change.
+            <Animated.View
+              entering={FadeInDown.duration(DURATION.base).delay(stagger(i))}
+              style={columns > 1 ? { marginBottom: 12, flex: 1 } : { marginBottom: 12 }}
+            >
               {view === 'items' && <ProductCard item={item as Product} layout={layout} />}
               {view === 'packages' && (
                 <PackageCard item={item as RentalPackage} layout={layout} />
@@ -270,7 +283,7 @@ export default function RentScreen() {
               {view === 'businesses' && (
                 <BusinessCard item={item as Business} layout={layout} />
               )}
-            </View>
+            </Animated.View>
           )}
         />
       )}
@@ -362,56 +375,57 @@ function ListHeader({
 
       {/* Toolbar: location, sort and card display — the website's controls. */}
       <View className="mt-4 flex-row items-center gap-2">
-        <Pressable
+        <PressableScale
           onPress={onOpenLocation}
           accessibilityRole="button"
           accessibilityLabel={`Location: ${location || 'All locations'}`}
+          wrapperStyle={{ flex: 1 }}
           className={`flex-1 flex-row items-center gap-1.5 rounded-xl border px-3 py-2 ${
-            location ? 'border-accent bg-accent/10' : 'border-slate-200 bg-white'
+            location ? 'border-brand bg-brand/10' : 'border-slate-200 bg-white'
           }`}
         >
-          <Ionicons name="location-outline" size={15} color={location ? '#47978b' : '#64748b'} />
+          <Ionicons name="location-outline" size={15} color={location ? '#006e59' : '#64748b'} />
           <Text
             className={`flex-1 text-xs font-medium ${
-              location ? 'text-accent-dark' : 'text-slate-600'
+              location ? 'text-brand' : 'text-slate-600'
             }`}
             numberOfLines={1}
           >
             {location ? cityOf(location) : 'All locations'}
           </Text>
           {!!location && (
-            <Pressable onPress={onClearLocation} hitSlop={8} accessibilityLabel="Clear location">
-              <Ionicons name="close-circle" size={15} color="#47978b" />
-            </Pressable>
+            <PressableScale onPress={onClearLocation} hitSlop={8} accessibilityLabel="Clear location">
+              <Ionicons name="close-circle" size={15} color="#006e59" />
+            </PressableScale>
           )}
-        </Pressable>
+        </PressableScale>
 
-        <Pressable
+        <PressableScale
           onPress={onOpenSort}
           accessibilityRole="button"
           accessibilityLabel={`Sort: ${sortLabel}`}
           className="flex-row items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2"
         >
-          <Ionicons name="swap-vertical" size={15} color="#47978b" />
+          <Ionicons name="swap-vertical" size={15} color="#006e59" />
           <Text className="text-xs font-medium text-slate-600">Sort</Text>
-        </Pressable>
+        </PressableScale>
 
         <View className="flex-row rounded-xl border border-slate-200 bg-white p-0.5">
           {LAYOUTS.map((l) => (
-            <Pressable
+            <PressableScale
               key={l.key}
               onPress={() => onLayout(l.key)}
               accessibilityRole="button"
               accessibilityLabel={`${l.key} view`}
               accessibilityState={{ selected: layout === l.key }}
-              className={`rounded-lg p-1.5 ${layout === l.key ? 'bg-accent' : ''}`}
+              className={`rounded-lg p-1.5 ${layout === l.key ? 'bg-brand' : ''}`}
             >
               <Ionicons
                 name={l.icon}
                 size={15}
                 color={layout === l.key ? '#ffffff' : '#64748b'}
               />
-            </Pressable>
+            </PressableScale>
           ))}
         </View>
       </View>
@@ -442,7 +456,7 @@ function Chip({
   icon?: string;
 }) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
@@ -451,13 +465,14 @@ function Chip({
       }`}
     >
       {!!icon && (
-        <Ionicons name={categoryIcon(icon)} size={14} color={active ? '#ffffff' : '#64748b'} />
+        <Ionicons name={categoryIcon(icon)} size={14} color={active ? '#00553f' : '#64748b'} />
       )}
-      <Text className={`text-xs font-medium ${active ? 'text-white' : 'text-slate-600'}`}>
+      {/* Gold carries dark text — white on it is about 1.7:1. */}
+      <Text className={`text-xs font-medium ${active ? 'text-ink-dark' : 'text-slate-600'}`}>
         {label}
       </Text>
-      <Text className={`text-xs ${active ? 'text-white/80' : 'text-slate-400'}`}>{count}</Text>
-    </Pressable>
+      <Text className={`text-xs ${active ? 'text-ink-dark/70' : 'text-slate-400'}`}>{count}</Text>
+    </PressableScale>
   );
 }
 
@@ -485,10 +500,21 @@ function OptionSheet({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <Pressable className="flex-1 justify-end bg-black/40" onPress={onClose}>
-        {/* Swallow taps on the sheet itself so they don't close it. */}
-        <Pressable
+      <PressableScale
+        wrapperStyle={{ flex: 1 }}
+        scaleTo={1}
+        dim={false}
+        className="flex-1 justify-end bg-black/40"
+        onPress={onClose}
+      >
+        {/* Swallow taps on the sheet itself so they don't close it. The sheet is
+            a hit target, not a button — no scale or dim, and the height cap has
+            to sit on the wrapper as well or it stops applying. */}
+        <PressableScale
           onPress={(e) => e.stopPropagation()}
+          scaleTo={1}
+          dim={false}
+          wrapperStyle={{ maxHeight: '70%' }}
           className="max-h-[70%] rounded-t-3xl bg-white px-5 pb-8 pt-4"
         >
           <View className="mb-4 h-1 w-10 self-center rounded-full bg-slate-200" />
@@ -497,7 +523,7 @@ function OptionSheet({
             {options.map((opt) => {
               const active = opt.key === value;
               return (
-                <Pressable
+                <PressableScale
                   key={opt.key || '__all__'}
                   onPress={() => onSelect(opt.key)}
                   accessibilityRole="button"
@@ -506,18 +532,18 @@ function OptionSheet({
                 >
                   <Text
                     className={`flex-1 text-sm ${
-                      active ? 'font-semibold text-accent-dark' : 'text-slate-600'
+                      active ? 'font-semibold text-brand' : 'text-slate-600'
                     }`}
                   >
                     {opt.label}
                   </Text>
-                  {active && <Ionicons name="checkmark" size={18} color="#47978b" />}
-                </Pressable>
+                  {active && <Ionicons name="checkmark" size={18} color="#006e59" />}
+                </PressableScale>
               );
             })}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </PressableScale>
+      </PressableScale>
     </Modal>
   );
 }

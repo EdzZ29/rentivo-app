@@ -7,7 +7,6 @@ import { useRouter, type Href } from 'expo-router';
 import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   RefreshControl,
   ScrollView,
   Share,
@@ -15,6 +14,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { DURATION, stagger } from '@/lib/motion';
+import PressableScale from '@/components/motion/PressableScale';
 import { useAuth } from '@/lib/auth';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -48,8 +50,8 @@ export default function AccountScreen() {
 
   if (restoring) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator color="#56aea1" />
+      <View className="flex-1 items-center justify-center bg-surface">
+        <ActivityIndicator color="#006e59" />
       </View>
     );
   }
@@ -57,7 +59,7 @@ export default function AccountScreen() {
   const isOwner = user?.role === 'owner' || user?.role === 'admin';
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-surface">
       {/* Title bar with the settings shortcut, as on the reference. */}
       <StatusBar style="dark" />
       {/* Title bar carries the status-bar inset so its white runs behind it. */}
@@ -66,21 +68,21 @@ export default function AccountScreen() {
         className="flex-row items-center justify-between border-b border-slate-200 bg-white px-5 pb-3"
       >
         <Text className="text-2xl font-bold text-ink">Account</Text>
-        <Pressable
+        <PressableScale
           onPress={() => router.push('/settings')}
           accessibilityRole="button"
           accessibilityLabel="Settings"
           hitSlop={10}
         >
-          <Ionicons name="settings-outline" size={24} color="#135776" />
-        </Pressable>
+          <Ionicons name="settings-outline" size={24} color="#006e59" />
+        </PressableScale>
       </View>
 
       <ScrollView
         contentContainerClassName="pb-6"
         refreshControl={
           user ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#56aea1" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#006e59" />
           ) : undefined
         }
       >
@@ -89,25 +91,25 @@ export default function AccountScreen() {
             <Text className="text-3xl font-bold text-ink" numberOfLines={1}>
               {user.fullName}
             </Text>
-            <Pressable
+            <PressableScale
               onPress={() => router.push('/profile')}
               accessibilityRole="button"
               hitSlop={6}
               className="mt-1 flex-row items-center gap-1 self-start"
             >
               <Text className="text-base font-bold text-ink">View profile</Text>
-              <Ionicons name="chevron-forward" size={15} color="#135776" />
-            </Pressable>
+              <Ionicons name="chevron-forward" size={15} color="#006e59" />
+            </PressableScale>
 
             {/* Promo banner — role-aware copy, but always a destination that
                 actually exists rather than a decorative "Learn more". */}
-            <Pressable
+            <PressableScale
               onPress={() => router.push(isOwner ? '/rent' : '/find')}
               accessibilityRole="button"
               className="mt-6 overflow-hidden rounded-2xl"
             >
               <LinearGradient
-                colors={['#135776', '#47978b']}
+                colors={['#006e59', '#006e59']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{ padding: 20 }}
@@ -133,7 +135,7 @@ export default function AccountScreen() {
                   />
                 </View>
               </LinearGradient>
-            </Pressable>
+            </PressableScale>
 
             {/* Quick shortcuts to the app's three main destinations. */}
             <View className="mt-4 flex-row gap-3">
@@ -146,8 +148,8 @@ export default function AccountScreen() {
                 API actually returns rather than inventing a balance. */}
             <Text className="mb-2 mt-7 text-xl font-bold text-ink">Plan</Text>
             <View className="flex-row items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4">
-              <View className="h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
-                <Ionicons name="card-outline" size={20} color="#47978b" />
+              <View className="h-10 w-10 items-center justify-center rounded-xl bg-brand/10">
+                <Ionicons name="card-outline" size={20} color="#006e59" />
               </View>
               <Text className="flex-1 text-base font-bold capitalize text-ink">
                 {user.plan && user.plan !== 'none' ? user.plan : 'No plan'}
@@ -159,7 +161,7 @@ export default function AccountScreen() {
           <SignInPrompt />
         )}
 
-        <Section title="Perks for you">
+        <Section title="Perks for you" index={0}>
           {!user && (
             <Row
               icon="ribbon-outline"
@@ -170,7 +172,7 @@ export default function AccountScreen() {
           <Row icon="gift-outline" label="Invite friends" onPress={() => void invite()} last />
         </Section>
 
-        <Section title="General">
+        <Section title="General" index={1}>
           <Row
             icon="pricetags-outline"
             label="Browse all rentals"
@@ -189,15 +191,44 @@ export default function AccountScreen() {
           />
         </Section>
 
+        <Section title="Legal" index={2}>
+          <Row
+            icon="shield-checkmark-outline"
+            label="Privacy Policy"
+            onPress={() => router.push('/legal/privacy-policy')}
+          />
+          <Row
+            icon="document-text-outline"
+            label="Terms and Conditions"
+            onPress={() => router.push('/legal/terms-and-conditions')}
+          />
+          <Row
+            icon="cafe-outline"
+            label="Cookie Policy"
+            onPress={() => router.push('/legal/cookie-policy')}
+          />
+          <Row
+            icon="cash-outline"
+            label="Refund Policy"
+            onPress={() => router.push('/legal/refund-policy')}
+          />
+          <Row
+            icon="checkbox-outline"
+            label="Form Consent"
+            onPress={() => router.push('/legal/form-consent')}
+            last
+          />
+        </Section>
+
         {user && (
           <View className="px-5 pt-7">
-            <Pressable
+            <PressableScale
               onPress={() => void signOut()}
               accessibilityRole="button"
               className="h-14 items-center justify-center rounded-2xl border border-slate-400 bg-white active:bg-slate-100"
             >
               <Text className="text-base font-bold text-ink">Log out</Text>
-            </Pressable>
+            </PressableScale>
           </View>
         )}
 
@@ -210,7 +241,7 @@ export default function AccountScreen() {
               contentFit="contain"
             />
             <Text className="text-xl font-bold text-ink">
-              Rentiv<Text className="text-accent">o</Text>
+              Rentiv<Text className="text-brand">o</Text>
             </Text>
           </View>
           <Text className="mt-2 text-xs text-slate-400">
@@ -230,13 +261,13 @@ function SignInPrompt() {
       <Text className="text-xl font-bold leading-7 text-ink">
         Sign in to book faster and keep track of your rentals.
       </Text>
-      <Pressable
+      <PressableScale
         onPress={() => router.push('/sign-in')}
         accessibilityRole="button"
-        className="mt-5 h-14 items-center justify-center rounded-2xl bg-accent active:bg-accent-dark"
+        className="mt-5 h-14 items-center justify-center rounded-2xl bg-brand active:bg-brand-dark"
       >
         <Text className="text-base font-bold text-white">Sign up or Log in</Text>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }
@@ -244,25 +275,39 @@ function SignInPrompt() {
 function Tile({ icon, label, href }: { icon: IconName; label: string; href: Href }) {
   const router = useRouter();
   return (
-    <Pressable
+    <PressableScale
       onPress={() => router.push(href)}
       accessibilityRole="button"
+      wrapperStyle={{ flex: 1 }}
       className="flex-1 items-center gap-2 rounded-2xl border border-slate-200 bg-white py-4 active:bg-slate-50"
     >
-      <Ionicons name={icon} size={24} color="#135776" />
+      <Ionicons name={icon} size={24} color="#006e59" />
       <Text className="text-sm text-ink">{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 // ── List primitives ───────────────────────────────────────────────────────
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({
+  title,
+  index = 0,
+  children,
+}: {
+  title: string;
+  /** Position in the page, so sections arrive one after another. */
+  index?: number;
+  children: ReactNode;
+}) {
+  const delay = stagger(index);
   return (
-    <View className="mt-6">
+    <Animated.View
+      entering={FadeInDown.duration(DURATION.base).delay(delay)}
+      style={{ marginTop: 24 }}
+    >
       <Text className="mb-2 px-5 text-lg font-bold text-ink">{title}</Text>
       <View className="border-y border-slate-200 bg-white">{children}</View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -278,16 +323,16 @@ function Row({
   last?: boolean;
 }) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       className={`flex-row items-center gap-4 px-5 py-4 active:bg-slate-50 ${
         last ? '' : 'border-b border-slate-100'
       }`}
     >
-      <Ionicons name={icon} size={22} color="#135776" />
+      <Ionicons name={icon} size={22} color="#006e59" />
       <Text className="flex-1 text-base text-ink">{label}</Text>
       <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
-    </Pressable>
+    </PressableScale>
   );
 }

@@ -3,8 +3,9 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState, type ComponentProps } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import PressableScale from '@/components/motion/PressableScale';
 import { assetUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -32,7 +33,7 @@ export default function Profile() {
   // Signing out from elsewhere while this is open leaves nothing to show.
   if (!user) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-50">
+      <View className="flex-1 items-center justify-center bg-surface">
         <Text className="text-sm text-slate-500">You&apos;re not signed in.</Text>
       </View>
     );
@@ -41,27 +42,27 @@ export default function Profile() {
   const avatar = assetUrl(user.avatarUrl);
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-surface">
       <StatusBar style="dark" />
       <View
         style={{ paddingTop: insets.top + 10 }}
         className="flex-row items-center gap-3 border-b border-slate-200 bg-white px-4 pb-3"
       >
-        <Pressable
+        <PressableScale
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/account'))}
           accessibilityRole="button"
           accessibilityLabel="Go back"
           hitSlop={10}
         >
-          <Ionicons name="arrow-back" size={22} color="#135776" />
-        </Pressable>
+          <Ionicons name="arrow-back" size={22} color="#006e59" />
+        </PressableScale>
         <Text className="text-lg font-bold text-ink">Profile</Text>
       </View>
 
       <ScrollView
         contentContainerClassName="pb-10"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#56aea1" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#006e59" />
         }
       >
         <View className="items-center bg-ink px-5 pb-8 pt-6">

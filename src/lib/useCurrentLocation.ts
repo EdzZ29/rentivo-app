@@ -7,6 +7,7 @@ interface CurrentLocation {
   status: LocationStatus;
   /** "Makati, Metro Manila" — city and region, whichever the geocoder returns. */
   label: string | null;
+  /** Only needed to recover from a refusal or a failed lookup. */
   retry: () => void;
 }
 
@@ -18,22 +19,32 @@ function labelFor(place: Location.LocationGeocodedAddress): string | null {
   return locality ?? region ?? null;
 }
 
+// Only re-read the place name once the device has actually moved somewhere
+// else. Reverse geocoding on every raw position update would be wasteful and
+// makes the label flicker between equivalent names.
+const MOVED_METERS = 500;
+const MIN_INTERVAL_MS = 30_000;
+
 /**
- * Where the user is, as a readable place name.
+ * Where the user is, as a readable place name, kept current on its own.
  *
- * Permission is requested on mount — declining is a normal outcome, not an
- * error, so it gets its own status and the caller can offer a way back in.
- * Nothing here is sent anywhere: the coordinates are reverse-geocoded and then
- * dropped, and only the place name is kept.
+ * After the first fix this subscribes to position updates, so moving to another
+ * city updates the label without the user doing anything — no manual refresh.
+ * Permission is requested on mount; declining is a normal outcome rather than
+ * an error, so it gets its own status and a way back in.
+ *
+ * Nothing is sent anywhere: coordinates are reverse-geocoded and then dropped,
+ * and only the place name is kept.
  */
 export function useCurrentLocation(): CurrentLocation {
   const [status, setStatus] = useState<LocationStatus>('locating');
   const [label, setLabel] = useState<string | null>(null);
   const cancelled = useRef(false);
+  const watch = useRef<Location.LocationSubscription | null>(null);
 
   const load = useCallback(async () => {
     setStatus('locating');
-    setLabel(null);
+
     try {
       const { granted } = await Location.requestForegroundPermissionsAsync();
       if (cancelled.current) return;
@@ -42,27 +53,45 @@ export function useCurrentLocation(): CurrentLocation {
         return;
       }
 
+      const apply = async (coords: Location.LocationObjectCoords) => {
+        const [place] = await Location.reverseGeocodeAsync({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        });
+        if (cancelled.current) return;
+
+        const name = place ? labelFor(place) : null;
+        if (name) {
+          // Skip identical names so the row doesn't re-render as you move
+          // around within the same city.
+          setLabel((prev) => (prev === name ? prev : name));
+          setStatus('ready');
+        } else {
+          setStatus((prev) => (prev === 'ready' ? prev : 'unavailable'));
+        }
+      };
+
       // Balanced accuracy: a city name doesn't need a GPS fix, and asking for
       // one costs battery and several seconds.
-      const position = await Location.getCurrentPositionAsync({
+      const first = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
       if (cancelled.current) return;
-
-      const [place] = await Location.reverseGeocodeAsync({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
+      await apply(first.coords);
       if (cancelled.current) return;
 
-      const name = place ? labelFor(place) : null;
-      if (name) {
-        setLabel(name);
-        setStatus('ready');
-      } else {
-        // A fix with no matching address still isn't something to show.
-        setStatus('unavailable');
-      }
+      // Then keep it current by itself.
+      watch.current?.remove();
+      watch.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          distanceInterval: MOVED_METERS,
+          timeInterval: MIN_INTERVAL_MS,
+        },
+        (position) => {
+          void apply(position.coords);
+        },
+      );
     } catch {
       if (!cancelled.current) setStatus('unavailable');
     }
@@ -71,8 +100,11 @@ export function useCurrentLocation(): CurrentLocation {
   useEffect(() => {
     cancelled.current = false;
     void load();
+
     return () => {
       cancelled.current = true;
+      watch.current?.remove();
+      watch.current = null;
     };
   }, [load]);
 

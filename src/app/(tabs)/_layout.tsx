@@ -1,10 +1,54 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, type ComponentProps } from 'react';
+import { Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import PressableScale from '@/components/motion/PressableScale';
+import { SPRING_PRESS } from '@/lib/motion';
 
-const ACTIVE = '#47978b';
+const ACTIVE = '#006e59';
 const INACTIVE = '#94a3b8';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
+
+/**
+ * A tab icon that lifts and grows when its tab becomes active.
+ *
+ * Spring-driven so switching tabs quickly doesn't queue up a backlog of
+ * animations — each change retargets the one in flight.
+ */
+function TabIcon({
+  name,
+  color,
+  size,
+  focused,
+}: {
+  name: IconName;
+  color: string;
+  size: number;
+  focused: boolean;
+}) {
+  const active = useSharedValue(focused ? 1 : 0);
+
+  useEffect(() => {
+    active.value = withSpring(focused ? 1 : 0, SPRING_PRESS);
+  }, [focused, active]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + active.value * 0.14 }, { translateY: -active.value * 2 }],
+  }));
+
+  return (
+    <Animated.View style={style}>
+      <Ionicons name={name} size={size} color={color} />
+    </Animated.View>
+  );
+}
 
 // The raised "Find a rent" action sits in the middle of the bar. It isn't a tab
 // — it opens the location picker as a modal — so it's rendered as a dummy tab
@@ -13,22 +57,26 @@ function FindARentButton() {
   const router = useRouter();
   return (
     <View className="flex-1 items-center">
-      <Pressable
+      <PressableScale
         onPress={() => router.push('/find')}
         accessibilityRole="button"
         accessibilityLabel="Find a rent by location"
-        className="-mt-7 h-14 w-14 items-center justify-center rounded-full bg-accent active:bg-accent-dark"
-        style={{
-          shadowColor: '#135776',
+        // A little more travel than the default: it's the one raised control,
+        // so it can afford a more physical press.
+        scaleTo={0.9}
+        dim={false}
+        className="-mt-7 h-14 w-14 items-center justify-center rounded-full bg-accent"
+        wrapperStyle={{
+          shadowColor: '#006e59',
           shadowOpacity: 0.3,
           shadowRadius: 8,
           shadowOffset: { width: 0, height: 4 },
           elevation: 6,
         }}
       >
-        <Ionicons name="location" size={26} color="#ffffff" />
-      </Pressable>
-      <Text className="mt-1 text-[10px] font-medium text-accent-dark">Find a rent</Text>
+        <Ionicons name="location" size={26} color="#00553f" />
+      </PressableScale>
+      <Text className="mt-1 text-[10px] font-medium text-ink">Find a rent</Text>
     </View>
   );
 }
@@ -42,6 +90,9 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: ACTIVE,
         tabBarInactiveTintColor: INACTIVE,
+        // Cross-fade between tabs. 'shift' would slide the whole screen, which
+        // fights the horizontal pager inside Rent.
+        animation: 'fade',
         // Screens draw edge to edge, so the bar has to reserve the bottom inset
         // itself — a fixed height would sit under the gesture bar.
         tabBarStyle: {
@@ -58,18 +109,14 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (p) => <TabIcon name="home-outline" {...p} />,
         }}
       />
       <Tabs.Screen
         name="rent"
         options={{
           title: 'Rent',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pricetags-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (p) => <TabIcon name="pricetags-outline" {...p} />,
         }}
       />
       <Tabs.Screen
@@ -83,18 +130,14 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (p) => <TabIcon name="settings-outline" {...p} />,
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
           title: 'Account',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
+          tabBarIcon: (p) => <TabIcon name="person-outline" {...p} />,
         }}
       />
     </Tabs>

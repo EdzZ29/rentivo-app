@@ -2,8 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { DURATION, stagger } from '@/lib/motion';
+import PressableScale from '@/components/motion/PressableScale';
 import { api, API_URL } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useRentals } from '@/lib/rentals';
@@ -33,7 +36,7 @@ export default function SettingsScreen() {
   }, [check]);
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1 bg-surface">
       <StatusBar style="dark" />
       <ScrollView contentContainerClassName="pb-10">
         <View className="bg-white px-5 pb-4" style={{ paddingTop: insets.top + 10 }}>
@@ -41,7 +44,7 @@ export default function SettingsScreen() {
           <Text className="mt-1 text-sm text-slate-500">Connection, data and account.</Text>
         </View>
 
-        <Section title="Connection">
+        <Section title="Connection" index={0}>
           <Row
             icon="pulse-outline"
             label="API status"
@@ -60,17 +63,17 @@ export default function SettingsScreen() {
         </Section>
 
         <View className="mt-3 px-5">
-          <Pressable
+          <PressableScale
             onPress={() => void check()}
             accessibilityRole="button"
             className="flex-row items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 active:bg-slate-50"
           >
-            <Ionicons name="refresh" size={16} color="#47978b" />
-            <Text className="text-sm font-semibold text-accent-dark">Test connection</Text>
-          </Pressable>
+            <Ionicons name="refresh" size={16} color="#006e59" />
+            <Text className="text-sm font-semibold text-brand">Test connection</Text>
+          </PressableScale>
         </View>
 
-        <Section title="Data">
+        <Section title="Data" index={1}>
           <Row icon="pricetags-outline" label="Items loaded" value={`${data.products.length}`} />
           <Row icon="cube-outline" label="Packages loaded" value={`${data.packages.length}`} />
           <Row
@@ -82,20 +85,20 @@ export default function SettingsScreen() {
         </Section>
 
         <View className="mt-3 px-5">
-          <Pressable
+          <PressableScale
             onPress={refresh}
             disabled={refreshing}
             accessibilityRole="button"
             className="flex-row items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 active:bg-slate-50"
           >
-            <Ionicons name="cloud-download-outline" size={16} color="#47978b" />
-            <Text className="text-sm font-semibold text-accent-dark">
+            <Ionicons name="cloud-download-outline" size={16} color="#006e59" />
+            <Text className="text-sm font-semibold text-brand">
               {refreshing ? 'Reloading…' : 'Reload listings'}
             </Text>
-          </Pressable>
+          </PressableScale>
         </View>
 
-        <Section title="Account">
+        <Section title="Account" index={2}>
           {user ? (
             <>
               <Row icon="person-outline" label="Signed in as" value={user.fullName} />
@@ -114,18 +117,18 @@ export default function SettingsScreen() {
 
         {user && (
           <View className="mt-3 px-5">
-            <Pressable
+            <PressableScale
               onPress={() => void signOut()}
               accessibilityRole="button"
               className="flex-row items-center justify-center gap-2 rounded-xl border border-red-200 bg-white py-3 active:bg-red-50"
             >
               <Ionicons name="log-out-outline" size={16} color="#dc2626" />
               <Text className="text-sm font-semibold text-red-600">Sign out</Text>
-            </Pressable>
+            </PressableScale>
           </View>
         )}
 
-        <Section title="About">
+        <Section title="About" index={3}>
           <Row
             icon="information-circle-outline"
             label="Version"
@@ -143,14 +146,27 @@ export default function SettingsScreen() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  index = 0,
+  children,
+}: {
+  title: string;
+  /** Position in the page, so sections arrive one after another. */
+  index?: number;
+  children: React.ReactNode;
+}) {
+  const delay = stagger(index);
   return (
-    <View className="mt-5 px-5">
+    <Animated.View
+      entering={FadeInDown.duration(DURATION.base).delay(delay)}
+      style={{ marginTop: 20, paddingHorizontal: 20 }}
+    >
       <Text className="mb-2 text-xs font-semibold uppercase text-slate-400">{title}</Text>
       <View className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         {children}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
