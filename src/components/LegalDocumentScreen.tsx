@@ -82,7 +82,7 @@ export default function LegalDocumentScreen({ slug }: { slug: string }) {
         {!!error && (
           <View className="flex-row items-center gap-2 rounded-xl bg-red-50 px-3 py-3">
             <Ionicons name="alert-circle-outline" size={16} color="#dc2626" />
-            <Text className="flex-1 text-xs text-red-700">{error}</Text>
+            <Text className="font-sans flex-1 text-xs text-red-700">{error}</Text>
           </View>
         )}
 

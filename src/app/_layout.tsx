@@ -1,3 +1,10 @@
+import {
+  Urbanist_400Regular,
+  Urbanist_500Medium,
+  Urbanist_600SemiBold,
+  Urbanist_700Bold,
+  useFonts,
+} from '@expo-google-fonts/urbanist';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -27,6 +34,18 @@ const SPLASH_MS = 1200;
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
+  // Urbanist ships one file per weight, so each is registered under its own
+  // family name; global.css maps the weight utilities onto them.
+  const [fontsLoaded] = useFonts({
+    Urbanist_400Regular,
+    Urbanist_500Medium,
+    Urbanist_600SemiBold,
+    Urbanist_700Bold,
+    // ClashDisplay, the headline face. TTF rather than the bundle's OTF:
+    // Android's support for OTF is patchy.
+    ClashDisplay_Semibold: require('@/assets/fonts/ClashDisplay-Semibold.ttf'),
+    ClashDisplay_Bold: require('@/assets/fonts/ClashDisplay-Bold.ttf'),
+  });
 
   useEffect(() => {
     // Hand over from the native splash to ours right away — they're identical,
@@ -46,7 +65,7 @@ export default function RootLayout() {
         <AuthProvider>
           <OnboardingProvider>
             <RentalsProvider>
-              <Root ready={ready} />
+              <Root ready={ready && fontsLoaded} />
             </RentalsProvider>
           </OnboardingProvider>
         </AuthProvider>

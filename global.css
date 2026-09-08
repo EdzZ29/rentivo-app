@@ -30,18 +30,70 @@
   /* The near-black the onboarding is staged on. Brand pushed most of the way
      to black, so the hue still shows in the gradient rather than flat grey. */
   --color-night: #042a22;
+
+  /* Urbanist is the app's typeface. Only the regular face can live here — see
+     the weight mapping below for why. */
+  --font-sans: Urbanist_400Regular;
 }
 
-/* Nativewind's own theme maps --font-serif to `sans-serif` on Android, which
-   isn't a serif at all. Point both platforms at a real one so `font-serif` on
-   the legal pages renders as intended — Android's generic family is `serif`
-   (Noto Serif), and a comma-separated stack won't resolve on native. */
+/* Urbanist ships one file per weight, and @expo-google-fonts registers each
+   under its own family name. React Native cannot pick a weight out of a family
+   the way a browser does, so a bold className has to switch the family too —
+   otherwise Android fakes the weight by smearing the regular face.
+
+   These override Tailwind's weight utilities to carry the matching family
+   alongside the numeric weight. */
+.font-normal {
+  font-family: Urbanist_400Regular;
+}
+
+.font-medium {
+  font-family: Urbanist_500Medium;
+}
+
+.font-semibold {
+  font-family: Urbanist_600SemiBold;
+}
+
+.font-bold {
+  font-family: Urbanist_700Bold;
+}
+
+/* ClashDisplay — the headline face, for onboarding titles and the Home
+   greeting. Each weight is its own file, so these classes name the weight
+   themselves instead of being combined with font-bold: two rules both setting
+   font-family would come down to stylesheet order, which is no way to pick a
+   typeface. They set no fontWeight either — the face is already heavy, and
+   asking for 700 on top invites a synthesised smear. */
+.font-display {
+  font-family: ClashDisplay_Semibold;
+}
+
+.font-display-bold {
+  font-family: ClashDisplay_Bold;
+}
+
+/* Platform overrides for the font variables, and they have to live HERE rather
+   than in @theme.
+   
+   Nativewind's own theme declares these inside `:root` with per-platform media
+   queries — --font-sans becomes System on iOS and SystemAndroid on Android.
+   Those platform-scoped values are matched before any unconditional one, so a
+   plain `@theme { --font-sans: … }` only ever becomes the fallback that native
+   never reaches. Declaring them the same way, after the import, puts ours
+   first. Verified in the compiled variable list, not assumed.
+
+   --font-serif gets the same treatment: Nativewind maps it to `sans-serif` on
+   Android, which is not a serif at all. Android's generic family is `serif`
+   (Noto Serif); a comma-separated stack won't resolve on native. */
 :root {
   @media ios {
+    --font-sans: Urbanist_400Regular;
     --font-serif: Georgia;
   }
 
   @media android {
+    --font-sans: Urbanist_400Regular;
     --font-serif: serif;
   }
 }

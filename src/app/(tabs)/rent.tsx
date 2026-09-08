@@ -160,7 +160,7 @@ export default function RentScreen() {
           edge to edge behind it instead of sitting below a safe-area frame. */}
       <View className="bg-white px-5 pb-4" style={{ paddingTop: insets.top + 10 }}>
         <Text className="text-2xl font-bold text-ink">Rent</Text>
-        <Text className="mt-1 text-sm text-slate-500">
+        <Text className="font-sans mt-1 text-sm text-slate-500">
           Browse everything available to rent.
         </Text>
 
@@ -432,7 +432,7 @@ function ListHeader({
 
       <View className="mb-4 mt-4">
         <Text className="text-base font-semibold text-ink">{heading}</Text>
-        <Text className="text-xs text-slate-500">
+        <Text className="font-sans text-xs text-slate-500">
           {resultCount === null
             ? 'Loading…'
             : `${resultCount} result${resultCount === 1 ? '' : 's'} · sorted by ${sortLabel.toLowerCase()}`}
@@ -471,7 +471,7 @@ function Chip({
       <Text className={`text-xs font-medium ${active ? 'text-ink-dark' : 'text-slate-600'}`}>
         {label}
       </Text>
-      <Text className={`text-xs ${active ? 'text-ink-dark/70' : 'text-slate-400'}`}>{count}</Text>
+      <Text className={`font-sans text-xs ${active ? 'text-ink-dark/70' : 'text-slate-400'}`}>{count}</Text>
     </PressableScale>
   );
 }

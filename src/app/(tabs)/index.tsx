@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
@@ -76,7 +77,7 @@ export default function HomeScreen() {
         <View className="bg-ink px-5 pb-6" style={{ paddingTop: insets.top + 14 }}>
           <LocationBar />
 
-          <Text className="mt-2 text-2xl font-bold text-white">
+          <Text className="mt-5 text-2xl font-display-bold text-white">
             What do you need today?
           </Text>
 
@@ -86,7 +87,7 @@ export default function HomeScreen() {
             className="mt-4 flex-row items-center gap-2 rounded-xl bg-white/15 px-4 py-3 active:bg-white/25"
           >
             <Ionicons name="location" size={18} color="#ffffff" />
-            <Text className="flex-1 text-sm text-white/90">Find a rent near you</Text>
+            <Text className="font-sans flex-1 text-sm text-white/90">Find a rent near you</Text>
             <Ionicons name="chevron-forward" size={16} color="#ffffff" />
           </PressableScale>
 
@@ -111,9 +112,23 @@ export default function HomeScreen() {
                 className="w-[76px] items-center"
               >
                 {/* Fixed square, and a fixed-height label box below it, so every
-                    tile is identical whether its name wraps to one line or two. */}
-                <View className="h-[76px] w-[76px] items-center justify-center rounded-2xl bg-brand/10">
-                  <Ionicons name={categoryIcon(c.name)} size={30} color="#006e59" />
+                    tile is identical whether its name wraps to one line or two.
+
+                    A photograph where the category has one, the glyph on a brand
+                    wash where it doesn't — the wash stays behind the image as
+                    the placeholder while it decodes, so the row never flashes
+                    empty squares. */}
+                <View className="h-[76px] w-[76px] items-center justify-center overflow-hidden rounded-2xl border border-black/5 bg-brand/10">
+                  {c.image ? (
+                    <Image
+                      source={c.image}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  ) : (
+                    <Ionicons name={categoryIcon(c.name)} size={30} color="#006e59" />
+                  )}
                 </View>
                 <Text
                   style={{ height: 30 }}
@@ -189,38 +204,69 @@ export default function HomeScreen() {
  * is a normal outcome, and tapping then opens the OS settings, since a second
  * in-app prompt won't be shown once it's been refused.
  */
-function LocationBar() {
-  const { status, label, retry } = useCurrentLocation();
+/**
+ * The marker beside the location text.
+ *
+ * White on a translucent chip, not the brand colour: the hero's background IS
+ * the brand colour now, so a green icon on it was invisible.
+ */
+function LocationPin({ filled }: { filled: boolean }) {
+  return (
+    <View className="h-9 w-9 items-center justify-center rounded-full bg-white/15">
+      <Ionicons
+        name={filled ? 'location' : 'location-outline'}
+        size={18}
+        color="#ffffff"
+      />
+    </View>
+  );
+}
 
-  const Row = ({ children }: { children: React.ReactNode }) => (
-    <View className="flex-row items-center gap-2">
-      <Ionicons name="location" size={16} color="#006e59" />
+// Module scope, not defined inside LocationBar: a component declared during
+// render is a new type every time, which remounts its children on each pass.
+function LocationRow({
+  filled,
+  children,
+  trailing,
+}: {
+  filled: boolean;
+  children: React.ReactNode;
+  trailing?: React.ReactNode;
+}) {
+  return (
+    <View className="flex-row items-center gap-3">
+      <LocationPin filled={filled} />
       <View className="flex-1">
-        <Text className="text-[11px] uppercase tracking-wider text-white/50">
+        <Text className="font-sans text-[11px] uppercase tracking-wider text-white/50">
           Your location
         </Text>
         {children}
       </View>
+      {trailing}
     </View>
   );
+}
+
+function LocationBar() {
+  const { status, label, retry } = useCurrentLocation();
 
   if (status === 'ready') {
     return (
-      <Row>
-        <Text className="text-sm font-semibold text-white" numberOfLines={1}>
+      <LocationRow filled>
+        <Text className="text-[15px] font-semibold text-white" numberOfLines={1}>
           {label}
         </Text>
-      </Row>
+      </LocationRow>
     );
   }
 
   if (status === 'locating') {
     return (
-      <Row>
-        <Text className="text-sm font-semibold text-white/70">
+      <LocationRow filled={false}>
+        <Text className="text-[15px] font-semibold text-white/70">
           Finding your location…
         </Text>
-      </Row>
+      </LocationRow>
     );
   }
 
@@ -230,18 +276,17 @@ function LocationBar() {
       onPress={() => (status === 'denied' ? void Linking.openSettings() : retry())}
       accessibilityRole="button"
       accessibilityLabel="Set your location"
-      className="flex-row items-center gap-2"
     >
-      <Ionicons name="location-outline" size={16} color="#006e59" />
-      <View className="flex-1">
-        <Text className="text-[11px] uppercase tracking-wider text-white/50">
-          Your location
-        </Text>
-        <Text className="text-sm font-semibold text-white" numberOfLines={1}>
+      <LocationRow
+        filled={false}
+        trailing={
+          <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.6)" />
+        }
+      >
+        <Text className="text-[15px] font-semibold text-white" numberOfLines={1}>
           {status === 'denied' ? 'Turn on location' : 'Location unavailable'}
         </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={15} color="rgba(255,255,255,0.6)" />
+      </LocationRow>
     </PressableScale>
   );
 }
@@ -276,7 +321,7 @@ function Row({
     <View className="mt-6">
       <SectionHeader title={title} onSeeAll={items.length > 0 ? onSeeAll : undefined} />
       {items.length === 0 ? (
-        <Text className="px-5 text-sm text-slate-400">{empty}</Text>
+        <Text className="font-sans px-5 text-sm text-slate-400">{empty}</Text>
       ) : (
         <ScrollView
           horizontal

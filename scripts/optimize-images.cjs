@@ -35,6 +35,10 @@ const TARGETS = [
   { file: 'onboarding_3.jpg', width: 1080, format: 'jpeg' },
 ];
 
+// Category thumbnails are drawn at 76pt, so ~3x that is plenty. They were
+// decoding 11 MB between them for tiles the size of a postage stamp.
+const CATEGORY_WIDTH = 240;
+
 const QUALITY = 82;
 const mb = (n) => (n / 1048576).toFixed(2);
 
@@ -78,6 +82,46 @@ const mb = (n) => (n / 1048576).toFixed(2);
         ` ${mb(fs.statSync(src).size)} → ${mb(buffer.length)} MB` +
         `   decoded ${((w0 * h0 * 4) / 1048576).toFixed(1)} → ${((w1 * h1 * 4) / 1048576).toFixed(1)} MB`,
     );
+  }
+
+  // Category thumbnails for Home's "Browse by category" row. Same trap as
+  // above at a smaller scale: 0.41 MB on disk between them, but 11 MB decoded
+  // for tiles the size of a postage stamp.
+  //
+  // Cover-cropped square rather than scaled by width, because the tile is
+  // square and draws them with contentFit="cover" — anything outside the
+  // square would be decoded and then thrown away.
+  const catSrc = path.join(SRC, 'categories');
+  const catOut = path.join(OUT, 'categories');
+  if (fs.existsSync(catSrc)) {
+    fs.mkdirSync(catOut, { recursive: true });
+    const files = fs.readdirSync(catSrc).filter((f) => /\.(jpe?g|png)$/i.test(f));
+
+    for (const file of files) {
+      const src = path.join(catSrc, file);
+      const image = await Jimp.read(src);
+      const w0 = image.getWidth();
+      const h0 = image.getHeight();
+      decodedBefore += (w0 * h0 * 4) / 1048576;
+      beforeTotal += fs.statSync(src).size;
+
+      image.cover(CATEGORY_WIDTH, CATEGORY_WIDTH);
+      image.quality(QUALITY);
+
+      const buffer = await image.getBufferAsync(Jimp.MIME_JPEG);
+      fs.writeFileSync(path.join(catOut, file), buffer);
+
+      const w1 = image.getWidth();
+      const h1 = image.getHeight();
+      decodedAfter += (w1 * h1 * 4) / 1048576;
+      afterTotal += buffer.length;
+
+      console.log(
+        `${`categories/${file}`.padEnd(20)} ${`${w0}x${h0}`.padStart(11)} → ${`${w1}x${h1}`.padEnd(11)}` +
+          ` ${mb(fs.statSync(src).size)} → ${mb(buffer.length)} MB` +
+          `   decoded ${((w0 * h0 * 4) / 1048576).toFixed(1)} → ${((w1 * h1 * 4) / 1048576).toFixed(1)} MB`,
+      );
+    }
   }
 
   console.log(

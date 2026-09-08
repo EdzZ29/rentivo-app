@@ -11,6 +11,7 @@
     "optimize:images": "node scripts/optimize-images.cjs"
   },
   "dependencies": {
+    "@expo-google-fonts/urbanist": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/elements": "^2.9.10",

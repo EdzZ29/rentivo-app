@@ -142,14 +142,14 @@ export default function SignIn() {
               contentFit="contain"
             />
             <Text className="mt-1 text-4xl font-bold tracking-tight text-ink">
-              Rentiv<Text className="text-brand">o</Text>
+              Rentiv<Text className="font-sans text-brand">o</Text>
             </Text>
           </View>
 
-          <Text className="mt-8 text-center text-xl text-slate-500">
+          <Text className="font-sans mt-8 text-center text-xl text-slate-500">
             {isRegister ? 'Join ' : 'Welcome to '}
             <Text className="font-bold italic text-ink">Rentivo</Text>
-            <Text> !</Text>
+            <Text className="font-sans"> !</Text>
           </Text>
 
           {/* Form card */}
@@ -227,7 +227,7 @@ export default function SignIn() {
                 >
                   {accepted && <Ionicons name="checkmark" size={14} color="#ffffff" />}
                 </View>
-                <Text className="flex-1 text-xs leading-5 text-slate-500">
+                <Text className="font-sans flex-1 text-xs leading-5 text-slate-500">
                   I agree to Rentivo&apos;s{' '}
                   <Text
                     className="font-semibold text-ink underline"
@@ -302,7 +302,7 @@ export default function SignIn() {
             accessibilityRole="button"
             className="mt-6 items-center py-2"
           >
-            <Text className="text-[15px] text-slate-400">
+            <Text className="font-sans text-[15px] text-slate-400">
               {isRegister ? 'Already have an account? ' : "Don't have an account? "}
               <Text className="font-bold text-ink">
                 {isRegister ? 'Sign in' : 'Sign up'}
@@ -333,7 +333,7 @@ function Banner({
     >
       <Ionicons name={icon} size={16} color={error ? '#dc2626' : '#006e59'} />
       <Text
-        className={`flex-1 text-xs ${error ? 'text-red-700' : 'text-brand'}`}
+        className={`font-sans flex-1 text-xs ${error ? 'text-red-700' : 'text-brand'}`}
       >
         {text}
       </Text>

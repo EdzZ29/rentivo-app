@@ -98,7 +98,7 @@ function Rating({ value, count }: { value: number; count: number }) {
   return (
     <View className="flex-row items-center gap-1">
       <Ionicons name="star" size={11} color="#0f172a" />
-      <Text className="text-[13px] text-slate-500">{value.toFixed(2)}</Text>
+      <Text className="font-sans text-[13px] text-slate-500">{value.toFixed(2)}</Text>
     </View>
   );
 }
@@ -129,14 +129,14 @@ function Details({
         {name}
       </Text>
       <Text
-        className={`text-slate-500 ${compact ? 'text-[11px]' : 'text-[13px]'}`}
+        className={`font-sans text-slate-500 ${compact ? 'text-[11px]' : 'text-[13px]'}`}
         numberOfLines={1}
       >
         {place || 'Location on request'}
       </Text>
       <View className="mt-0.5 flex-row items-center gap-1.5">
         {trailing}
-        {reviewCount > 0 && <Text className="text-[13px] text-slate-400">·</Text>}
+        {reviewCount > 0 && <Text className="font-sans text-[13px] text-slate-400">·</Text>}
         <Rating value={rating} count={reviewCount} />
       </View>
     </View>
@@ -154,7 +154,7 @@ function Price({
 }) {
   return (
     <Text
-      className={`text-slate-700 ${compact ? 'text-[11px]' : 'text-[13px]'}`}
+      className={`font-sans text-slate-700 ${compact ? 'text-[11px]' : 'text-[13px]'}`}
       numberOfLines={1}
     >
       <Text className="font-semibold text-ink">{amount}</Text>
@@ -312,7 +312,7 @@ export function BusinessCard({
       place={cityOf(item.location)}
       trailing={
         <Text
-          className={`text-slate-700 ${compact ? 'text-[11px]' : 'text-[13px]'}`}
+          className={`font-sans text-slate-700 ${compact ? 'text-[11px]' : 'text-[13px]'}`}
           numberOfLines={1}
         >
           {item.category ?? 'Rentals'}

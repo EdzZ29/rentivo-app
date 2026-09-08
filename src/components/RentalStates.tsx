@@ -27,7 +27,7 @@ export function EmptyState({ message }: { message: string }) {
   return (
     <View className="items-center justify-center py-20">
       <Ionicons name="cube-outline" size={44} color="#cbd5e1" />
-      <Text className="mt-4 px-8 text-center text-sm text-slate-500">{message}</Text>
+      <Text className="font-sans mt-4 px-8 text-center text-sm text-slate-500">{message}</Text>
     </View>
   );
 }
@@ -47,7 +47,7 @@ export function ErrorState({
       <Text className="mt-4 text-base font-semibold text-ink">
         Couldn&apos;t load rentals
       </Text>
-      <Text className="mt-2 text-center text-sm text-slate-500">{message}</Text>
+      <Text className="font-sans mt-2 text-center text-sm text-slate-500">{message}</Text>
       <PressableScale
         onPress={onRetry}
         accessibilityRole="button"

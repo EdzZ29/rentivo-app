@@ -179,7 +179,7 @@ export default function Onboarding() {
             accessibilityLabel="Skip to the last step"
             hitSlop={12}
           >
-            <Text className="text-sm text-slate-400">Skip</Text>
+            <Text className="font-sans text-sm text-slate-400">Skip</Text>
           </PressableScale>
         ) : (
           // Keeps the row's height steady once Skip goes away.
@@ -210,14 +210,14 @@ export default function Onboarding() {
               <View style={{ width, height: pageHeight }} className="justify-center px-7">
                 <Collage photos={item.photos} />
 
-                <View className="mt-12">
-                  <Text className="text-[30px] font-bold leading-9 text-slate-900">
+                <View className="mt-2">
+                  <Text className="text-[30px] font-display-bold mt-5 text-slate-900">
                     {item.title}
                   </Text>
-                  <Text className="text-[30px] font-bold leading-9 text-brand">
+                  <Text className="text-[30px] font-display-bold text-brand">
                     {item.titleAccent}
                   </Text>
-                  <Text className="mt-3 text-[13px] leading-5 text-slate-500">
+                  <Text className="font-sans mt-3 text-[13px]  text-slate-500">
                     {item.body}
                   </Text>
                 </View>

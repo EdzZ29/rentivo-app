@@ -65,7 +65,7 @@ export default function FindScreen() {
         </PressableScale>
         <View className="flex-1">
           <Text className="text-lg font-bold text-ink">Find a rent</Text>
-          <Text className="text-xs text-slate-500">Pick a location to browse</Text>
+          <Text className="font-sans text-xs text-slate-500">Pick a location to browse</Text>
         </View>
       </View>
 
@@ -98,13 +98,13 @@ export default function FindScreen() {
             <Ionicons name="globe-outline" size={20} color="#006e59" />
             <View className="flex-1">
               <Text className="text-sm font-semibold text-brand">Anywhere</Text>
-              <Text className="text-xs text-slate-500">Browse every location</Text>
+              <Text className="font-sans text-xs text-slate-500">Browse every location</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color="#006e59" />
           </PressableScale>
 
           {loading ? (
-            <Text className="py-10 text-center text-sm text-slate-400">Loading locations…</Text>
+            <Text className="font-sans py-10 text-center text-sm text-slate-400">Loading locations…</Text>
           ) : rows.length === 0 ? (
             <EmptyState
               message={
@@ -127,10 +127,10 @@ export default function FindScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-sm font-semibold text-ink">{cityOf(row.location)}</Text>
-                  <Text className="text-xs text-slate-500" numberOfLines={1}>
+                  <Text className="font-sans text-xs text-slate-500" numberOfLines={1}>
                     {row.location}
                   </Text>
-                  <Text className="mt-0.5 text-xs text-slate-400">
+                  <Text className="font-sans mt-0.5 text-xs text-slate-400">
                     {row.items} item{row.items === 1 ? '' : 's'} · {row.packages} package
                     {row.packages === 1 ? '' : 's'} · {row.businesses} business
                     {row.businesses === 1 ? '' : 'es'}

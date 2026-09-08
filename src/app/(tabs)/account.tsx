@@ -154,7 +154,7 @@ export default function AccountScreen() {
               <Text className="flex-1 text-base font-bold capitalize text-ink">
                 {user.plan && user.plan !== 'none' ? user.plan : 'No plan'}
               </Text>
-              <Text className="text-sm capitalize text-slate-500">{user.role}</Text>
+              <Text className="font-sans text-sm capitalize text-slate-500">{user.role}</Text>
             </View>
           </View>
         ) : (
@@ -241,10 +241,10 @@ export default function AccountScreen() {
               contentFit="contain"
             />
             <Text className="text-xl font-bold text-ink">
-              Rentiv<Text className="text-brand">o</Text>
+              Rentiv<Text className="font-sans text-brand">o</Text>
             </Text>
           </View>
-          <Text className="mt-2 text-xs text-slate-400">
+          <Text className="font-sans mt-2 text-xs text-slate-400">
             Version {Constants.expoConfig?.version ?? '1.0.0'}
           </Text>
         </View>
@@ -282,7 +282,7 @@ function Tile({ icon, label, href }: { icon: IconName; label: string; href: Href
       className="flex-1 items-center gap-2 rounded-2xl border border-slate-200 bg-white py-4 active:bg-slate-50"
     >
       <Ionicons name={icon} size={24} color="#006e59" />
-      <Text className="text-sm text-ink">{label}</Text>
+      <Text className="font-sans text-sm text-ink">{label}</Text>
     </PressableScale>
   );
 }
@@ -331,7 +331,7 @@ function Row({
       }`}
     >
       <Ionicons name={icon} size={22} color="#006e59" />
-      <Text className="flex-1 text-base text-ink">{label}</Text>
+      <Text className="font-sans flex-1 text-base text-ink">{label}</Text>
       <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
     </PressableScale>
   );

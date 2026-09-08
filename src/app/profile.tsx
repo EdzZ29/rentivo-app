@@ -34,7 +34,7 @@ export default function Profile() {
   if (!user) {
     return (
       <View className="flex-1 items-center justify-center bg-surface">
-        <Text className="text-sm text-slate-500">You&apos;re not signed in.</Text>
+        <Text className="font-sans text-sm text-slate-500">You&apos;re not signed in.</Text>
       </View>
     );
   }
@@ -84,7 +84,7 @@ export default function Profile() {
             </View>
           )}
           <Text className="mt-3 text-xl font-bold text-white">{user.fullName}</Text>
-          <Text className="text-sm text-white/70">{user.email}</Text>
+          <Text className="font-sans text-sm text-white/70">{user.email}</Text>
         </View>
 
         <View className="mt-5 px-5">
@@ -119,7 +119,7 @@ function InfoRow({
       }`}
     >
       <Ionicons name={icon} size={18} color="#94a3b8" />
-      <Text className="text-sm text-slate-500">{label}</Text>
+      <Text className="font-sans text-sm text-slate-500">{label}</Text>
       <Text
         className="flex-1 text-right text-sm font-medium capitalize text-ink"
         numberOfLines={1}
