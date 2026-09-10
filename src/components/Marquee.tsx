@@ -73,7 +73,9 @@ export default function Marquee({
                 <Text className="text-[11px] font-semibold tracking-[1.2px] text-white">
                   {text.toUpperCase()}
                 </Text>
-                <View className="mx-4 h-1 w-1 rounded-full bg-accent" />
+                {/* brand-light rather than the accent — the accent is now the
+                    same green as this ground, and would disappear into it. */}
+                <View className="mx-4 h-1 w-1 rounded-full bg-brand-light" />
               </View>
             ))}
           </View>

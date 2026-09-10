@@ -465,13 +465,13 @@ function Chip({
       }`}
     >
       {!!icon && (
-        <Ionicons name={categoryIcon(icon)} size={14} color={active ? '#00553f' : '#64748b'} />
+        <Ionicons name={categoryIcon(icon)} size={14} color={active ? '#ffffff' : '#64748b'} />
       )}
-      {/* Gold carries dark text — white on it is about 1.7:1. */}
-      <Text className={`text-xs font-medium ${active ? 'text-ink-dark' : 'text-slate-600'}`}>
+      {/* The accent is a dark fill, so an active chip carries white. */}
+      <Text className={`text-xs font-medium ${active ? 'text-white' : 'text-slate-600'}`}>
         {label}
       </Text>
-      <Text className={`font-sans text-xs ${active ? 'text-ink-dark/70' : 'text-slate-400'}`}>{count}</Text>
+      <Text className={`font-sans text-xs ${active ? 'text-white/70' : 'text-slate-400'}`}>{count}</Text>
     </PressableScale>
   );
 }

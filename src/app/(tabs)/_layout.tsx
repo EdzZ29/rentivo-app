@@ -74,7 +74,7 @@ function FindARentButton() {
           elevation: 6,
         }}
       >
-        <Ionicons name="location" size={26} color="#00553f" />
+        <Ionicons name="location" size={26} color="#ffffff" />
       </PressableScale>
       <Text className="mt-1 text-[10px] font-medium text-ink">Find a rent</Text>
     </View>

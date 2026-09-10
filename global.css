@@ -17,11 +17,13 @@
   --color-ink: #006e59;
   --color-ink-dark: #00553f;
 
-  /* Accent. Gold carries DARK text, never white: on white it sits around
-     1.7:1, so anything it backs must be near-black or the brand green. Used
-     sparingly — the raised action, active chips, savings badges, tickers. */
-  --color-accent: #f7bd53;
-  --color-accent-dark: #e0a441;
+  /* Accent. Points at the main colour — the palette is monochrome, so the
+     accent is a matter of emphasis rather than a second hue. It is a dark
+     fill and carries WHITE content. Used sparingly — the raised action,
+     active chips, savings badges. On dark grounds reach for
+     --color-brand-light instead; the accent would vanish into them. */
+  --color-accent: #006e59;
+  --color-accent-dark: #00553f;
 
   /* The page ground. A hair off white, and slightly cool, so white cards and
      sheets still separate from it. */

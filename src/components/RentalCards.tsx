@@ -272,7 +272,7 @@ export function PackageCard({
         </View>
         {savings > 0 ? (
           <View className="absolute left-3 top-3 rounded-full bg-accent px-2.5 py-1">
-            <Text className="text-[11px] font-semibold text-ink-dark">
+            <Text className="text-[11px] font-semibold text-white">
               Save {formatPrice(savings, item.currency)}
             </Text>
           </View>
