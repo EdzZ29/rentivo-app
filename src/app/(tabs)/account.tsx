@@ -258,7 +258,7 @@ function SignInPrompt() {
   const router = useRouter();
   return (
     <View className="bg-slate-100 px-5 py-6">
-      <Text className="text-xl font-bold leading-7 text-ink">
+      <Text className="text-xl font-display-bold leading-7 text-ink">
         Sign in to book faster and keep track of your rentals.
       </Text>
       <PressableScale
