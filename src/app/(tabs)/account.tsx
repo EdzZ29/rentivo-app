@@ -259,7 +259,7 @@ function SignInPrompt() {
   return (
     <View className="bg-slate-100 px-5 py-6">
       <Text className="text-xl font-display-bold leading-7 text-ink">
-        Sign in to book faster and keep track of your rentals.
+        Sign in to book faster and keep track of your rentals...
       </Text>
       <PressableScale
         onPress={() => router.push('/sign-in')}
