@@ -238,7 +238,7 @@ function LocationRow({
       <LocationPin filled={filled} />
       <View className="flex-1">
         <Text className="font-sans text-[11px] uppercase tracking-wider text-white/50">
-          Your location
+          Your Location
         </Text>
         {children}
       </View>
